@@ -1,0 +1,14 @@
+﻿Field	Type	Null	Key	Default	Extra
+id	int	NO	PRI	NULL	auto_increment
+tenant_id	int	NO	MUL	1	
+ticket_id	int	NO	MUL	NULL	
+sla_configuration_id	int	YES	MUL	NULL	
+timer_type	enum('response','resolution','escalation')	NO	MUL	NULL	
+start_time	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+pause_time	datetime	YES		NULL	
+resume_time	datetime	YES		NULL	
+total_elapsed_minutes	int	YES		0	
+sla_deadline	datetime	NO		NULL	
+status	enum('active','paused','completed','breached')	YES		active	
+created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP

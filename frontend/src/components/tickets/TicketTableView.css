@@ -1,0 +1,941 @@
+.ticket-table-view {
+  padding: 0;                                   /* REMOVED: No padding for full width */
+  max-width: none;                              /* REMOVED: No max-width constraint */
+  margin: 0;                                    /* REMOVED: No margin for full width */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.tickets-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 25px !important;                     /* INCREASED: Card-like padding */
+  background: white !important;                /* ADDED: White background for card appearance */
+  color: #333333 !important;                   /* FORCED: Dark text for visibility */
+  border-radius: 1px;                          /* STANDARDIZED: Match stats card radius */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important; /* ADDED: Card shadow effect */
+  border: 2px solid #e5e7eb !important;        /* ADDED: Card border outline */
+  margin-left: -90px !important;                   /* FULL WIDTH: No left margin */
+  margin-right: -100px !important;                  /* FULL WIDTH: No right margin */
+  margin-top: -25px;                               /* FULL WIDTH: No top margin */
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.header-top h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  position: relative;
+}
+
+/* REMOVED: Blue underline for cleaner header appearance
+.header-top h1::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 80px;
+  height: 3px;
+  background-color: #2563eb;
+}
+*/
+
+.logout-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.tickets-header h1 {
+  margin: 0 0 10px 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  position: relative;
+}
+
+/* REMOVED: Blue underline for cleaner header appearance
+.tickets-header h1::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 80px;
+  height: 3px;
+  background-color: #2563eb;
+}
+*/
+
+.tickets-header p {
+  margin: 30px 0 0 0;                          /* ADDED: Top margin to move text down */
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.product-filter-info {
+  background: #f8f9fa;
+  padding: 8px 20px;                           /* MINIMAL: No vertical padding for maximum compactness */
+  border-radius: 8px;                          /* REDUCED: Smaller border radius for more compact look */
+  margin: 2px 0 -18px 0;                       /* FURTHER REDUCED: Even tighter margins */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #e9ecef;
+  font-size: 0.9rem;                           /* REDUCED: Smaller font size for more compact appearance */
+  
+}
+
+.clear-filter-btn {
+  color: #565a5d;
+  text-decoration: none;
+  padding: 16px 50px;
+  border: rgb(213, 232, 232) solid 1px;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  background: #f0f2f3;
+  white-space: nowrap;
+  margin-right: 10px;
+
+}
+
+.clear-filter-btn:hover {
+  background: #f8fafb;
+  color: #0a1422;
+  transform: none;
+}
+
+.tickets-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 0 20px;                             /* ADDED: Side padding for content readability */
+}
+
+.stat-card {
+  background: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  text-align: center;
+  transition: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #e5e5e5;
+  outline: none !important;
+  filter: none !important;
+}
+
+.stat-card:hover {
+  transform: none !important;
+  box-shadow: grey !important;
+  background: white !important;
+  border: 1px solid #e5e5e5 !important;
+  outline: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+.stat-card h3 {
+  margin: 4px 0 0 0;
+  font-size: 1rem;
+  color: #01050c;
+  font-weight: 600;
+  order: 2;
+  background: white !important;               /* REMOVE: Purple gradient background */
+  background-image: none !important;         /* REMOVE: Any gradient images */
+  background-color: white !important;        /* FORCE: White background color */
+  text-shadow: none !important;              /* REMOVE: Any text shadows */
+  filter: none !important;                   /* REMOVE: Any filter effects */
+  -webkit-text-fill-color: initial !important; /* REMOVE: Webkit text fill colors */
+  -webkit-background-clip: initial !important;  /* REMOVE: Webkit background clip */
+  -webkit-text-stroke: none !important;      /* REMOVE: Webkit text stroke */
+}
+
+/* AGGRESSIVE OVERRIDE: Force remove purple gradient from ticket stats emojis */
+.ticket-table-view .tickets-stats .stat-card h3,
+.tickets-stats .stat-card h3,
+div.ticket-table-view div.tickets-stats div.stat-card h3,
+.tickets-stats * {
+  background: white !important;              /* FORCE: White background */
+  background-image: none !important;         /* FORCE: No gradient */
+  background-color: white !important;        /* FORCE: White background color */
+  color: #01050c !important;                 /* FORCE: Black text color */
+  text-shadow: none !important;              /* FORCE: No shadows */
+  filter: none !important;                   /* FORCE: No filters */
+  -webkit-text-fill-color: #01050c !important; /* FORCE: Black webkit fill */
+  -webkit-background-clip: initial !important;  /* FORCE: No clip */
+  -webkit-text-stroke: none !important;      /* FORCE: No stroke */
+}
+
+/* NUCLEAR OPTION: Remove all gradients from tickets stats section */
+.tickets-stats, .tickets-stats * {
+  background-image: none !important;
+  filter: none !important;
+  -webkit-text-fill-color: inherit !important;
+}
+
+.stat-number {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #1f2937;
+  order: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Table Styles */
+.ticket-table-container {
+  background: white;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  border: none;
+  padding: 0 20px;                             /* ADDED: Side padding for content readability */
+}
+
+.ticket-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  background: white !important;               /* FORCE: White background override */
+  border-bottom: 2px solid #e5e7eb !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  padding: 24px 20px;
+  gap: 0 !important;
+  grid-gap: 0 !important;
+}
+
+/* FORCE OVERRIDE: Ensure table header is white */
+.ticket-table-view .table-header,
+.ticket-table .table-header,
+div.ticket-table-view div.ticket-table div.table-header {
+  background: white !important;               /* FORCE: White background */
+  background-color: white !important;         /* FORCE: White background color */
+}
+
+.header-cell {
+  padding: 0;
+  font-weight: 600;
+  color: #414752;
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-right: none !important;
+  border-left: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.header-cell.sortable {
+  cursor: default;
+  user-select: none;
+  transition: none;
+}
+
+.header-cell.sortable:hover {
+  background-color: white !important;
+  color: #414752 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.header-cell:last-child {
+  text-align: right;
+  justify-content: flex-end;
+}
+
+.table-body {
+  max-height: none;
+  overflow-y: visible;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  border-bottom: 1px solid #d1d5db !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  transition: none !important;
+  cursor: default;
+  position: relative;
+  padding: 16px 20px;
+  transform: none !important;
+  gap: 0 !important;
+  grid-gap: 0 !important;
+}
+
+.table-row:hover {
+  background-color: transparent !important;
+  background: transparent !important;
+  transform: none !important;
+  box-shadow: none !important;
+  border-bottom: 1px solid #d1d5db !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  outline: none !important;
+}
+
+.table-row.expanded {
+  background-color: white;                     /* CHANGED: From light blue to white */
+}
+
+.table-cell {
+  padding: 0;
+  border-right: none !important;
+  border-left: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  transition: none !important;
+  transform: none !important;
+  min-height: auto;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.table-cell:last-child {
+  justify-content: flex-end;
+}
+
+.cell-content {
+  width: 100%;
+}
+
+.ticket-title {
+  font-weight: 400;
+  color: #374151;
+  margin-bottom: 0px;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.ticket-type {
+  font-size: 0.8rem;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.customer-info {
+  width: 100%;
+}
+
+.customer-name {
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+.customer-email {
+  font-size: 0.7rem;                          /* REDUCED: Smaller email font size */
+  color: #6b7280;
+  word-break: break-all;
+}
+
+.product-badge {
+  color: #1f2937 !important;
+  background-color: #f3f4f6 !important;
+  padding: 6px 12px !important;
+  border-radius: 20px !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.status-badge {
+  color: #374151;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-align: left;
+  min-width: auto;
+  display: inline-block;
+  background: none;
+}
+
+.actions-cell {
+  justify-content: center;
+}
+
+.expand-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  width: auto;
+  min-width: 90px;
+  height: 32px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+}
+
+.expand-btn:hover {
+  background: #3b82f6;
+  transform: none;
+}
+
+/* Expanded Content */
+.expanded-content {
+  grid-column: 1 / -1;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  padding: 24px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+    transform: translateY(0);
+  }
+}
+
+.ticket-details {
+  margin-bottom: 24px;
+}
+
+.detail-section {
+  margin-bottom: 20px;
+}
+
+.detail-section h4 {
+  margin: 0 0 12px 0;
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 600;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.detail-section p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 0.9rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.ticket-chat-section {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 20px;
+}
+
+.ticket-chat-section h4 {
+  margin: 0 0 16px 0;
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Full Ticket Section Styles */
+.full-ticket-section {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 20px;
+}
+
+.full-ticket-section h4 {
+  margin: 0 0 20px 0;
+  color: #1f2937;
+  font-size: 1.2rem;
+  font-weight: 700;
+  border-bottom: 3px solid #3b82f6;
+  padding-bottom: 10px;
+}
+
+.full-ticket-section h5 {
+  margin: 0 0 15px 0;
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* SLA Timer Section */
+.sla-timer-section {
+  margin-bottom: 25px;
+}
+
+.sla-timer-card {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 20px;
+  position: relative;
+  box-shadow: none !important;
+}
+
+.sla-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.product-name {
+  font-weight: 700;
+  color: #0c4a6e;
+  font-size: 1.1rem;
+}
+
+.sla-time {
+  background: #0ea5e9;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.timer-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.timer-icon {
+  font-size: 1.5rem;
+}
+
+.time-remaining {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #dc2626;
+}
+
+.deadline-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+}
+
+.deadline-label {
+  font-weight: 600;
+  color: #374151;
+}
+
+.deadline-value {
+  font-weight: 700;
+  color: #dc2626;
+}
+
+.timer-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.status-icon {
+  font-size: 1.2rem;
+}
+
+.status-text {
+  font-weight: 600;
+  color: #dc2626;
+}
+
+/* Scoped to this page only — a global .priority-badge broke Agent Dashboard table cells (absolute → viewport top-right) */
+.ticket-table-view .priority-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #f97316;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+/* Ticket Actions Section */
+.ticket-actions-section {
+  margin-bottom: 25px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resolve-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.resolve-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.escalate-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.escalate-btn:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+.open-media-btn {
+  background: #f0f2f5;
+  color: #667781;
+}
+
+.open-media-btn:hover {
+  background: #e5e7eb;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Loading and Error States */
+.ticket-table-loading,
+.ticket-table-error {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #f3f4f6;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.retry-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 16px;
+}
+
+.retry-btn:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+.no-tickets {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.no-tickets h2 {
+  margin: 0 0 16px 0;
+  color: #374151;
+}
+
+.no-tickets p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .table-header,
+  .table-row {
+    grid-template-columns: 2fr 1.5fr 1fr 1fr 1.2fr 60px;
+  }
+  
+  .header-cell,
+  .table-cell {
+    padding: 12px 8px;
+    font-size: 0.85rem;
+  }
+  
+  .ticket-title {
+    font-size: 0.9rem;
+  }
+  
+  .customer-email {
+    font-size: 0.7rem !important;              /* FORCE: Even smaller on mobile */
+  }
+}
+
+@media (max-width: 768px) {
+  .ticket-table-view {
+    padding: 15px;
+  }
+  
+  .tickets-header {
+    padding: 15px;
+  }
+  
+  .header-top h1 {
+    font-size: 2rem;
+  }
+  
+  .tickets-stats {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+  }
+  
+  .stat-card {
+    padding: 15px;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+  }
+  
+  .table-header,
+  .table-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .header-cell,
+  .table-cell {
+    padding: 8px 12px;
+    border-right: none;
+    border-bottom: 1px solid #f1f5f9;
+    justify-content: flex-start;
+  }
+  
+  .header-cell:last-child,
+  .table-cell:last-child {
+    border-bottom: none;
+  }
+  
+  .expanded-content {
+    padding: 16px;
+  }
+  
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* Scrollbar Styling - Removed */
+
+/* Additional Table Styles */
+.customer-info-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+
+.customer-name {
+  font-weight: 600;
+  color: #1f2937;
+  background: white !important;                /* FORCE: White background */
+  background-color: white !important;          /* FORCE: White background color */
+  text-align: left !important;
+  align-self: flex-start !important;
+}
+
+/* FORCE OVERRIDE: Remove any blue background from customer names */
+.ticket-table-view .customer-name,
+.table-cell .customer-name,
+.customer-info-cell .customer-name,
+div.ticket-table-view div.table-cell div.customer-info-cell div.customer-name {
+  background: white !important;                /* FORCE: White background */
+  background-color: white !important;          /* FORCE: White background color */
+  color: #1f2937 !important;                   /* FORCE: Dark text color */
+  text-decoration: none !important;            /* FORCE: No underline */
+  border: none !important;                     /* FORCE: No borders */
+  outline: none !important;                    /* FORCE: No outline */
+}
+
+.customer-email {
+  font-size: 0.85rem !important;               /* FORCE: Smaller email font size */
+  color: #3b82f6;
+  font-weight: 200;
+  text-align: left !important;
+  align-self: flex-start !important;
+}
+
+.product-badge {
+  color: #374151;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  display: inline-block;
+  min-width: 100px;
+}
+
+.status-badge.new {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+}
+
+.status-badge.in_progress {
+  background: #fef3c7 !important;
+  color: #d97706 !important;
+}
+
+.status-badge.escalated {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+}
+
+.status-badge.closed {
+  background: #d1fae5 !important;
+  color: #059669 !important;
+}
+
+/* TicketTableView specific expand button - GREEN COLOR */
+.ticket-table-view .expand-btn,
+.table-cell .expand-btn {
+  background: #17a84c !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 4px !important;
+  width: auto !important;
+  min-width: 90px !important;
+  height: 32px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: none !important;
+  padding: 0 12px !important;
+}
+
+.ticket-table-view .expand-btn:hover,
+.table-cell .expand-btn:hover {
+  background: #16a34a !important;
+  color: white !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.sort-icon {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  font-size: 0 !important;
+}

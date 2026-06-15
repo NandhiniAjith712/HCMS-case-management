@@ -1,0 +1,224 @@
+.ticket-view-demo {
+  padding: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.demo-header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.demo-header h1 {
+  margin: 0 0 15px 0;
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+.demo-header p {
+  margin: 0 0 30px 0;
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.view-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.toggle-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 15px 30px;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-btn.active {
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+  border-color: rgba(255, 255, 255, 0.8);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.demo-content {
+  margin-bottom: 40px;
+}
+
+.view-container {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.view-container h2 {
+  margin: 0;
+  padding: 25px 30px 15px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #1f2937;
+  font-size: 1.8rem;
+  font-weight: 700;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.view-description {
+  margin: 0;
+  padding: 0 30px 25px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #6b7280;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.demo-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.feature-section {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-section:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+.feature-section h3 {
+  margin: 0 0 20px 0;
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border-bottom: 3px solid #3b82f6;
+  padding-bottom: 10px;
+}
+
+.feature-section ul,
+.feature-section ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.feature-section li {
+  margin-bottom: 12px;
+  color: #4b5563;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.feature-section ul li {
+  list-style: none;
+  position: relative;
+  padding-left: 25px;
+}
+
+.feature-section ul li::before {
+  content: '✨';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 1.2rem;
+}
+
+.feature-section ol li {
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .ticket-view-demo {
+    padding: 15px;
+  }
+  
+  .demo-header {
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .demo-header h1 {
+    font-size: 2.2rem;
+  }
+  
+  .demo-header p {
+    font-size: 1rem;
+    margin-bottom: 20px;
+  }
+  
+  .view-toggle {
+    gap: 15px;
+  }
+  
+  .toggle-btn {
+    padding: 12px 24px;
+    font-size: 1rem;
+  }
+  
+  .view-container h2 {
+    padding: 20px 20px 10px;
+    font-size: 1.5rem;
+  }
+  
+  .view-description {
+    padding: 0 20px 20px;
+    font-size: 1rem;
+  }
+  
+  .demo-features {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .feature-section {
+    padding: 20px;
+  }
+  
+  .feature-section h3 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .demo-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .view-toggle {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .toggle-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+}

@@ -1,0 +1,80 @@
+.ff-page {
+  min-height: 100vh;
+  background: #f4f6fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.ff-card {
+  width: min(720px, 100%);
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.ff-card h2 {
+  margin: 0 0 8px;
+  color: #0f172a;
+}
+
+.ff-sub {
+  margin: 0 0 18px;
+  color: #475569;
+}
+
+.ff-label {
+  display: block;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 8px 0;
+}
+
+.ff-stars {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.ff-star {
+  border: none;
+  background: transparent;
+  font-size: 30px;
+  color: #cbd5e1;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.ff-star--on {
+  color: #f59e0b;
+}
+
+.ff-textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 14px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.ff-submit {
+  margin-top: 14px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  border-radius: 10px;
+  padding: 11px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ff-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+

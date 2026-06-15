@@ -1,0 +1,22 @@
+/* Shared Inter + tokens for auth screens (dashboard ref UI) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.auth-page-ref,
+.gl-auth-ref,
+.lp-auth-ref {
+  --login-bg: #f3f4f6;
+  --login-surface: #ffffff;
+  --login-text: #111827;
+  --login-muted: #6b7280;
+  --login-subtle: #9ca3af;
+  --login-border: #e5e7eb;
+  --login-accent: #2563eb;
+  --login-accent-hover: #1d4ed8;
+  --login-danger: #b91c1c;
+  --login-danger-bg: #fef2f2;
+  --login-danger-border: #fecaca;
+  --login-radius: 10px;
+  --login-radius-sm: 8px;
+  --login-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --login-font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}

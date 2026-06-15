@@ -1,0 +1,233 @@
+/* ITSM Support Assistant — floating launcher + panel */
+
+.itsm-assistant-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 9998;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.itsm-assistant-fab:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+}
+
+.itsm-assistant-fab:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+.itsm-assistant-fab svg {
+  width: 28px;
+  height: 28px;
+}
+
+.itsm-assistant-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.35);
+  animation: itsm-assistant-fade-in 0.2s ease;
+}
+
+.itsm-assistant-panel {
+  position: fixed;
+  right: 20px;
+  bottom: 88px;
+  z-index: 10000;
+  width: min(400px, calc(100vw - 32px));
+  max-height: min(560px, calc(100vh - 120px));
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: itsm-assistant-slide-up 0.22s ease;
+}
+
+@keyframes itsm-assistant-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes itsm-assistant-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.itsm-assistant-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  color: #fff;
+}
+
+.itsm-assistant-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.itsm-assistant-sub {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.itsm-assistant-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.itsm-assistant-close:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.itsm-assistant-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  min-height: 200px;
+  max-height: 360px;
+  background: #f8fafc;
+}
+
+.itsm-assistant-row {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.itsm-assistant-row--user {
+  justify-content: flex-end;
+}
+
+.itsm-assistant-bubble {
+  max-width: 88%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.itsm-assistant-bubble--assistant {
+  background: #fff;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  border-bottom-left-radius: 4px;
+}
+
+.itsm-assistant-bubble--user {
+  background: #2563eb;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.itsm-assistant-bubble--error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.itsm-assistant-composer {
+  padding: 12px;
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.itsm-assistant-input {
+  flex: 1;
+  min-height: 44px;
+  max-height: 120px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.itsm-assistant-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.itsm-assistant-send {
+  flex-shrink: 0;
+  min-width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 0 12px;
+}
+
+.itsm-assistant-send:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.itsm-assistant-typing {
+  font-size: 0.8rem;
+  color: #64748b;
+  padding: 0 4px 8px;
+}
+
+@media (max-width: 480px) {
+  .itsm-assistant-panel {
+    right: 16px;
+    left: 16px;
+    bottom: 80px;
+    width: auto;
+    max-height: calc(100vh - 100px);
+  }
+
+  .itsm-assistant-fab {
+    right: 16px;
+    bottom: 16px;
+  }
+}

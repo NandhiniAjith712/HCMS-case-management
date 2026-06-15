@@ -1,0 +1,50 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: itsm-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/config.env
+    environment:
+      - PORT=5100
+    volumes:
+      - backend_uploads:/app/uploads
+    ports:
+      - "127.0.0.1:7004:5100"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:5100/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    networks:
+      - itsm-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: itsm-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7005:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - itsm-net
+
+networks:
+  itsm-net:
+    driver: bridge
+
+volumes:
+  backend_uploads:

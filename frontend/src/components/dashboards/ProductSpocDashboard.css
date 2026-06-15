@@ -1,0 +1,232 @@
+/*
+ * ProductSpocDashboard.css — intentionally minimal.
+ * All layout is provided by OrgSpocDashboard.css (imported in component).
+ */
+.psd-dead-placeholder {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 28px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+.psd-header__left { display: flex; align-items: center; gap: 14px; }
+.psd-header__icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem;
+}
+.psd-header__title { font-size: 1rem; font-weight: 700; color: #f1f5f9; margin: 0; }
+.psd-header__sub { font-size: 0.75rem; color: #94a3b8; margin: 0; }
+.psd-header__right { display: flex; align-items: center; gap: 10px; }
+.psd-badge {
+  padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;
+  background: #312e81; color: #a5b4fc; border: 1px solid #4338ca;
+}
+.psd-logout-btn {
+  background: #ef4444; color: #fff; border: none; padding: 6px 14px;
+  border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+}
+.psd-logout-btn:hover { background: #dc2626; }
+
+/* ── Nav Tabs ── */
+.psd-nav {
+  display: flex; gap: 4px; padding: 10px 28px;
+  background: #1e293b; border-bottom: 1px solid #334155;
+  overflow-x: auto;
+}
+.psd-nav__tab {
+  background: none; border: none; color: #94a3b8;
+  padding: 7px 16px; border-radius: 6px; cursor: pointer;
+  font-size: 0.82rem; font-weight: 500; white-space: nowrap;
+  transition: all 0.15s;
+}
+.psd-nav__tab:hover { background: #334155; color: #e2e8f0; }
+.psd-nav__tab.active { background: #4f46e5; color: #fff; font-weight: 700; }
+
+/* ── Content area ── */
+.psd-content { flex: 1; padding: 24px 28px; overflow-y: auto; }
+
+/* ── KPI Cards ── */
+.psd-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.psd-kpi-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 6px;
+  transition: border-color 0.2s;
+}
+.psd-kpi-card:hover { border-color: #4f46e5; }
+.psd-kpi-card__label { font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.psd-kpi-card__value { font-size: 1.9rem; font-weight: 800; color: #f1f5f9; line-height: 1; }
+.psd-kpi-card--open   .psd-kpi-card__value { color: #fb923c; }
+.psd-kpi-card--escalated .psd-kpi-card__value { color: #ef4444; }
+.psd-kpi-card--sla    .psd-kpi-card__value { color: #f59e0b; }
+.psd-kpi-card--critical .psd-kpi-card__value { color: #dc2626; }
+.psd-kpi-card--closed  .psd-kpi-card__value { color: #10b981; }
+.psd-kpi-card--new    .psd-kpi-card__value { color: #60a5fa; }
+
+/* ── Section card ── */
+.psd-section {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.psd-section__head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid #334155;
+}
+.psd-section__title { font-size: 0.9rem; font-weight: 700; color: #f1f5f9; margin: 0; }
+.psd-section__count {
+  background: #0f172a; color: #64748b; font-size: 0.72rem;
+  padding: 2px 8px; border-radius: 10px; font-weight: 600;
+}
+
+/* ── Table ── */
+.psd-table-wrap { overflow-x: auto; }
+.psd-table {
+  width: 100%; border-collapse: collapse; font-size: 0.82rem;
+}
+.psd-table th {
+  background: #0f172a; color: #64748b; font-size: 0.7rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 10px 14px; text-align: left; white-space: nowrap;
+}
+.psd-table td { padding: 11px 14px; border-bottom: 1px solid #1e293b; color: #cbd5e1; vertical-align: middle; }
+.psd-table tbody tr:hover { background: #0f172a; }
+.psd-table .td-id { color: #6366f1; font-weight: 700; font-size: 0.8rem; }
+.psd-table .td-title { color: #f1f5f9; font-weight: 600; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.psd-table .td-muted { color: #64748b; font-size: 0.77rem; }
+
+/* ── Status + Priority pills ── */
+.psd-pill {
+  display: inline-block; padding: 2px 8px; border-radius: 10px;
+  font-size: 0.7rem; font-weight: 700; text-transform: capitalize;
+}
+.psd-pill--new         { background: #dbeafe; color: #1d4ed8; }
+.psd-pill--in_progress { background: #ede9fe; color: #6d28d9; }
+.psd-pill--escalated   { background: #fee2e2; color: #dc2626; }
+.psd-pill--resolved    { background: #d1fae5; color: #059669; }
+.psd-pill--closed      { background: #f1f5f9; color: #475569; }
+.psd-pill--low         { background: #d1fae5; color: #059669; }
+.psd-pill--medium      { background: #fef9c3; color: #a16207; }
+.psd-pill--high        { background: #ffedd5; color: #c2410c; }
+.psd-pill--critical    { background: #fee2e2; color: #dc2626; }
+
+/* ── SLA breach indicator ── */
+.psd-sla-breach { color: #f59e0b; font-size: 0.72rem; font-weight: 700; }
+.psd-sla-ok     { color: #10b981; font-size: 0.72rem; }
+
+/* ── Analytics grid ── */
+.psd-analytics-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;
+}
+@media (max-width: 768px) { .psd-analytics-grid { grid-template-columns: 1fr; } }
+.psd-chart-card {
+  background: #1e293b; border: 1px solid #334155; border-radius: 14px; padding: 18px;
+}
+.psd-chart-card__title { font-size: 0.82rem; font-weight: 700; color: #94a3b8; margin: 0 0 14px; text-transform: uppercase; letter-spacing: 0.04em; }
+.psd-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.psd-bar-label { font-size: 0.77rem; color: #94a3b8; width: 90px; flex-shrink: 0; text-transform: capitalize; }
+.psd-bar-track { flex: 1; background: #0f172a; border-radius: 4px; height: 10px; overflow: hidden; }
+.psd-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+.psd-bar-fill--new         { background: #60a5fa; }
+.psd-bar-fill--in_progress { background: #818cf8; }
+.psd-bar-fill--escalated   { background: #f87171; }
+.psd-bar-fill--resolved    { background: #34d399; }
+.psd-bar-fill--closed      { background: #94a3b8; }
+.psd-bar-fill--low         { background: #34d399; }
+.psd-bar-fill--medium      { background: #fbbf24; }
+.psd-bar-fill--high        { background: #fb923c; }
+.psd-bar-fill--critical    { background: #f87171; }
+.psd-bar-val { font-size: 0.77rem; color: #f1f5f9; font-weight: 700; width: 28px; text-align: right; }
+
+/* ── Users list ── */
+.psd-users-list { list-style: none; margin: 0; padding: 0; }
+.psd-user-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 18px; border-bottom: 1px solid #0f172a;
+}
+.psd-user-row:last-child { border-bottom: none; }
+.psd-user-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+}
+.psd-user-info { flex: 1; min-width: 0; }
+.psd-user-name { font-size: 0.83rem; font-weight: 600; color: #f1f5f9; }
+.psd-user-email { font-size: 0.72rem; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.psd-user-meta { font-size: 0.72rem; color: #94a3b8; text-align: right; }
+
+/* ── Search/filter bar ── */
+.psd-filter-bar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.psd-search-input {
+  flex: 1; min-width: 180px; padding: 8px 12px; border-radius: 8px;
+  background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
+  font-size: 0.83rem; outline: none;
+}
+.psd-search-input:focus { border-color: #4f46e5; }
+.psd-select {
+  padding: 8px 12px; border-radius: 8px; background: #1e293b;
+  border: 1px solid #334155; color: #e2e8f0; font-size: 0.83rem; cursor: pointer; outline: none;
+}
+.psd-select:focus { border-color: #4f46e5; }
+.psd-refresh-btn {
+  padding: 8px 14px; border-radius: 8px; background: #334155; border: none;
+  color: #94a3b8; font-size: 0.83rem; cursor: pointer; font-weight: 600;
+  transition: background 0.15s;
+}
+.psd-refresh-btn:hover { background: #4f46e5; color: #fff; }
+
+/* ── Empty / Loading state ── */
+.psd-empty { text-align: center; padding: 40px 20px; color: #64748b; }
+.psd-empty p { margin: 0; font-size: 0.88rem; }
+.psd-loading { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 40px; color: #64748b; }
+.psd-spinner {
+  width: 22px; height: 22px; border: 3px solid #334155;
+  border-top-color: #4f46e5; border-radius: 50%; animation: psdSpin 0.7s linear infinite;
+}
+@keyframes psdSpin { to { transform: rotate(360deg); } }
+
+/* ── Pagination ── */
+.psd-pagination { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; }
+.psd-page-btn {
+  padding: 5px 12px; border-radius: 6px; border: 1px solid #334155;
+  background: #1e293b; color: #94a3b8; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+}
+.psd-page-btn.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+.psd-page-btn:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Toast popup (reuses same pattern as OrgSpocDashboard) ── */
+.psd-toast-popup {
+  position: fixed; top: 20px; right: 20px; z-index: 9999;
+  background: white; color: #333; border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15); border: 1px solid #e5e7eb;
+  animation: psdSlideIn 0.4s ease-out; max-width: 380px; min-width: 280px;
+}
+.psd-toast-popup.success { border-left: 4px solid #10b981; }
+.psd-toast-popup.error   { border-left: 4px solid #ef4444; }
+.psd-toast-content { display: flex; align-items: center; padding: 16px; gap: 12px; position: relative; }
+.psd-toast-icon { font-size: 1.6rem; }
+.psd-toast-text h3 { margin: 0 0 3px; font-size: 0.9rem; font-weight: 700; color: #333; }
+.psd-toast-text p  { margin: 0; font-size: 0.82rem; color: #555; line-height: 1.4; }
+.psd-toast-close {
+  position: absolute; top: 8px; right: 8px; background: none; border: none;
+  font-size: 1.3rem; cursor: pointer; color: #666; border-radius: 50%;
+  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+}
+.psd-toast-close:hover { background: #f3f4f6; }
+@keyframes psdSlideIn { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }

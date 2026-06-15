@@ -1,0 +1,77 @@
+@import './auth-ref.css';
+
+.lp-auth-ref {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--login-bg);
+  font-family: var(--login-font);
+  color: var(--login-text);
+}
+
+.lp-auth-ref *,
+.lp-auth-ref *::before,
+.lp-auth-ref *::after {
+  box-sizing: border-box;
+}
+
+.lp-auth-ref .login-tab-bar {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lp-auth-ref .tab-button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--login-border);
+  border-radius: var(--login-radius-sm);
+  background: var(--login-surface);
+  box-shadow: var(--login-shadow);
+  cursor: pointer;
+  font-family: var(--login-font);
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.lp-auth-ref .tab-button:hover {
+  border-color: #d1d5db;
+}
+
+.lp-auth-ref .tab-button.active {
+  border-color: var(--login-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.lp-auth-ref .tab-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--login-radius-sm);
+  background: #eff6ff;
+  color: var(--login-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.lp-auth-ref .tab-text {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--login-text);
+}
+
+@media (max-width: 480px) {
+  .lp-auth-ref {
+    padding: 16px;
+  }
+}

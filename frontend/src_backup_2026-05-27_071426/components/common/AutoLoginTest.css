@@ -1,0 +1,127 @@
+.auto-login-test {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.auto-login-test h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.test-section {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.test-section h2 {
+  color: #495057;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 10px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #495057;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.test-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  transition: background-color 0.2s;
+}
+
+.test-btn:hover {
+  background: #0056b3;
+}
+
+.debug-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  transition: background-color 0.2s;
+}
+
+.debug-btn:hover {
+  background: #545b62;
+}
+
+.debug-btn.danger {
+  background: #dc3545;
+}
+
+.debug-btn.danger:hover {
+  background: #c82333;
+}
+
+.info-section {
+  background: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 30px;
+}
+
+.info-section h3 {
+  color: #004085;
+  margin-bottom: 15px;
+}
+
+.info-section ol, .info-section ul {
+  color: #004085;
+  line-height: 1.6;
+}
+
+.info-section li {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 600px) {
+  .auto-login-test {
+    padding: 15px;
+  }
+  
+  .test-btn, .debug-btn {
+    width: 100%;
+    margin-right: 0;
+  }
+}

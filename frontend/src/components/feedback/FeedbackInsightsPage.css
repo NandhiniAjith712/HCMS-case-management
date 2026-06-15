@@ -1,0 +1,82 @@
+.fi-wrap {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.fi-sub {
+  margin-top: -4px;
+  color: #64748b;
+}
+
+.fi-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.fi-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.fi-label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.fi-value {
+  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.fi-section {
+  margin-top: 16px;
+}
+
+.fi-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.fi-theme-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fi-theme-chip {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.fi-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fi-table th,
+.fi-table td {
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  padding: 8px;
+  font-size: 13px;
+}
+
+.fi-empty,
+.fi-muted {
+  color: #64748b;
+}
+

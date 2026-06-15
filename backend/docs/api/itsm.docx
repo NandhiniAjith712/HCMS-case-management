@@ -1,0 +1,464 @@
+Tick System – Enterprise ITSM Role-Based Customer Support Platform
+
+---
+
+Project Description:
+Tick System is a comprehensive enterprise-level IT Service Management (ITSM) platform that provides role-based access control for customer support operations. The system supports 5 distinct user roles (User, Support Executive, Support Manager, CEO, System Administrator) with tailored dashboards and permissions. Customers can submit support requests through multiple channels (web form, WhatsApp, email), and support staff can efficiently manage, respond, and resolve these requests with advanced features including automatic escalation, performance tracking, and WhatsApp integration.
+
+---
+
+Key Features & Functionalities:
+
+## 🎯 Core System Features
+- Role-Based Access Control (RBAC): 5 distinct user roles with tailored permissions and dashboards
+- Multi-Channel Ticket Creation: Web form, WhatsApp, and email integration
+- Advanced Ticket Management: Status tracking, assignment, escalation, and resolution
+- WhatsApp Business API Integration: Real-time notifications and ticket creation via WhatsApp
+- File Upload System: Support for images and PDF attachments
+- Performance Analytics: Executive dashboards with metrics and reporting
+- Automatic Escalation: Time-based escalation system for unresolved tickets
+- Customer Satisfaction Tracking**: Rating system for support quality
+- URL-Based Access: Direct system access via email-based URLs
+
+## 👥 Role-Based Features
+
+### 1. User (Customer) Role
+- Create tickets via web form or WhatsApp
+- View personal ticket history and status
+- Rate support quality after ticket closure
+- Receive WhatsApp notifications
+- Download ticket attachments
+- Add comments to own tickets
+
+### 2. Support Executive Role
+- View and manage assigned tickets
+- Reply to customer tickets
+- Update ticket status (new → in_progress → closed)
+- Send WhatsApp notifications
+- Upload attachments to replies
+- View customer history
+
+### 3. Support Manager Role
+- All Support Executive permissions
+- View all tickets across organization
+- Assign tickets to executives
+- Monitor executive performance
+- Rate executive performance
+- View support metrics and analytics
+- Manage ticket priorities
+- Handle escalated tickets
+- Generate performance reports
+
+### 4. CEO Role
+- Executive dashboard with strategic analytics
+- View organizational metrics
+- Access customer satisfaction trends
+- Monitor support performance
+- View financial impact reports
+- Access business intelligence
+- View WhatsApp integration metrics
+
+### 5. System Administrator Role
+- Complete system management
+- User account management
+- System configuration
+- WhatsApp integration settings
+- Database management
+- Security settings
+- System logs access
+
+---
+
+## 🗄️ Enhanced Database Schema
+
+### Users Table (Role-Based)
+```sql
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(100) NOT NULL UNIQUE,
+  name VARCHAR(100) NOT NULL,
+  password_hash VARCHAR(255),
+  role ENUM('user', 'support_executive', 'support_manager', 'ceo', 'admin') DEFAULT 'user',
+  department VARCHAR(100),
+  manager_id INT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  is_active BOOLEAN DEFAULT TRUE,
+  last_login DATETIME,
+  FOREIGN KEY (manager_id) REFERENCES users(id)
+);
+```
+
+### Tickets Table (Enhanced)
+```sql
+CREATE TABLE tickets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  name VARCHAR(30) NOT NULL,
+  email VARCHAR(100) NOT NULL,
+  mobile VARCHAR(15),
+  description TEXT NOT NULL,
+  issue_type VARCHAR(50),
+  issue_type_other VARCHAR(100),
+  issue_title VARCHAR(150),
+  attachment_name VARCHAR(255),
+  attachment_type VARCHAR(50),
+  attachment LONGBLOB,
+  assigned_to INT,
+  assigned_by INT,
+  priority ENUM('low', 'medium', 'high', 'urgent') DEFAULT 'medium',
+  status ENUM('new', 'in_progress', 'closed', 'escalated') DEFAULT 'new',
+  category VARCHAR(100),
+  subcategory VARCHAR(100),
+  satisfaction_rating INT,
+  satisfaction_comment TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  closed_at DATETIME,
+  resolution_time INT,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL
+);
+```
+
+### Replies Table (Enhanced)
+```sql
+CREATE TABLE replies (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  ticket_id INT NOT NULL,
+  user_id INT NOT NULL,
+  message TEXT NOT NULL,
+  is_internal BOOLEAN DEFAULT FALSE,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+### Performance Ratings Table
+```sql
+CREATE TABLE performance_ratings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  executive_id INT NOT NULL,
+  manager_id INT NOT NULL,
+  ticket_id INT NOT NULL,
+  rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (executive_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (manager_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE
+);
+```
+
+### WhatsApp Conversations Table
+```sql
+CREATE TABLE whatsapp_conversations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  phone_number VARCHAR(20) NOT NULL,
+  user_id INT,
+  conversation_state JSON,
+  last_message_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+```
+
+---
+
+## 🎨 Frontend Components & Dashboards
+
+### Role-Based Dashboard Components
+
+#### User Dashboard (`UserDashboard.js`)
+- Personal ticket list and history
+- Ticket creation form
+- Ticket details view
+- Rating system for closed tickets
+- WhatsApp chat integration
+
+#### Support Executive Dashboard (`AdminDashboard.js`)
+- Assigned tickets management
+- Ticket status updates
+- Reply interface with WhatsApp integration
+- Customer history view
+- Performance metrics display
+- File attachment handling
+
+#### Support Manager Dashboard (`ManagerDashboard.js`)
+- All tickets overview
+- Executive performance monitoring
+- Ticket assignment interface
+- Analytics dashboard
+- Performance rating system
+- Report generation
+
+#### CEO Dashboard (`CEODashboard.js`)
+- Strategic analytics overview
+- Organizational metrics
+- Customer satisfaction trends
+- Performance reports
+- Business intelligence
+- WhatsApp integration metrics
+
+#### System Administrator Dashboard (`AdminDashboard.js`)
+- User management panel
+- System configuration
+- WhatsApp settings
+- Database management
+- Security settings
+- System logs
+
+---
+
+## 🔌 API Endpoints
+
+### **Authentication & User Management**
+- `POST /api/auth/login` - User login with role-based tokens
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/profile` - Get user profile
+- `PUT /api/auth/profile` - Update profile
+- `GET /api/users` - Get users (role-based access)
+- `POST /api/users` - Create user (admin only)
+- `PUT /api/users/:id` - Update user (role-based)
+- `DELETE /api/users/:id` - Delete user (admin only)
+
+### **Ticket Management**
+- `GET /api/tickets` - Get tickets (role-based filtering)
+- `POST /api/tickets` - Create ticket
+- `GET /api/tickets/:id` - Get ticket details
+- `PUT /api/tickets/:id` - Update ticket (role-based)
+- `PUT /api/tickets/:id/assign` - Assign ticket (manager+)
+- `PUT /api/tickets/:id/status` - Update status
+- `POST /api/tickets/:id/rate` - Rate support (user only)
+- `GET /api/tickets/:id/attachment` - Download attachment
+
+### **Reply System**
+- `GET /api/replies/:ticketId` - Get replies
+- `POST /api/replies` - Add reply (role-based)
+- `PUT /api/replies/:id` - Update reply (role-based)
+
+### **Analytics & Reports**
+- `GET /api/analytics/overview` - System overview (CEO)
+- `GET /api/analytics/performance` - Performance metrics (Manager+)
+- `GET /api/analytics/satisfaction` - Satisfaction trends (CEO)
+- `GET /api/analytics/whatsapp` - WhatsApp metrics (Admin)
+
+### **WhatsApp Integration**
+- `GET /api/whatsapp/webhook` - Webhook verification
+- `POST /api/whatsapp/webhook` - Handle messages
+- `POST /api/whatsapp/send` - Send message (role-based)
+- `GET /api/whatsapp/status` - Service status
+
+---
+
+## 🚀 Technology Stack
+
+### **Backend**
+- **Runtime**: Node.js with Express.js
+- **Database**: MySQL with connection pooling
+- **Authentication**: JWT with role-based tokens
+- **File Upload**: Multer with validation
+- **WhatsApp**: Business API integration
+- **Security**: Helmet, rate limiting, input validation
+- **Validation**: Express-validator
+
+### **Frontend**
+- **Framework**: React.js with hooks
+- **Routing**: React Router DOM
+- **UI Components**: Material-UI with custom styling
+- **Phone Input**: React Phone Input 2
+- **Country Selection**: React Select with flags
+- **Styling**: CSS with glassmorphism design
+
+### **Key Libraries**
+- **Backend**: axios, bcryptjs, cors, dotenv, jsonwebtoken, mysql2, socket.io
+- **Frontend**: react-phone-input-2, react-select, react-country-flag, axios
+
+---
+
+## 🔒 Security & Access Control
+
+### JWT Token Structure
+```javascript
+{
+  "userId": 123,
+  "email": "user@company.com",
+  "role": "support_manager",
+  "permissions": ["view_tickets", "assign_tickets", "rate_performance"],
+  "department": "support",
+  "managerId": 456,
+  "iat": 1640995200,
+  "exp": 1641081600
+}
+```
+
+### Permission Matrix
+```javascript
+const permissions = {
+  user: [
+    'create_ticket',
+    'view_own_tickets',
+    'rate_support',
+    'whatsapp_chat'
+  ],
+  support_executive: [
+    'view_assigned_tickets',
+    'reply_to_tickets',
+    'update_ticket_status',
+    'send_whatsapp_notifications'
+  ],
+  support_manager: [
+    'view_all_tickets',
+    'assign_tickets',
+    'rate_performance',
+    'view_analytics',
+    'generate_reports'
+  ],
+  ceo: [
+    'view_all_data',
+    'view_analytics',
+    'view_reports',
+    'view_business_intelligence'
+  ],
+  admin: [
+    'all_permissions',
+    'manage_users',
+    'system_configuration',
+    'database_management'
+  ]
+};
+```
+
+---
+
+## 📊 Recent System Enhancements
+
+### 1. Role-Based Dashboard Implementation
+- User Dashboard: Personal ticket management with rating system
+- Support Executive Dashboard: Assigned ticket management with WhatsApp integration
+- Support Manager Dashboard: Full ticket oversight with performance analytics
+- CEO Dashboard: Strategic business intelligence and metrics
+- Admin Dashboard: Complete system administration
+
+### 2. Enhanced Database Schema
+- User Management: Role-based user table with department and manager relationships
+- Ticket Enhancement: Priority levels, categories, satisfaction tracking
+- Performance Tracking: Executive performance ratings and metrics
+- WhatsApp Integration: Conversation state management and tracking
+
+### 3. Advanced WhatsApp Integration
+- Multi-Channel Support: Web form, WhatsApp, and email ticket creation
+- Real-Time Notifications: Automatic WhatsApp updates for ticket status changes
+- Conversation Management: State tracking and response routing
+- Gmail Integration: Automatic email extraction and response routing
+
+### 4. Performance Analytics
+- Executive Metrics: Support performance tracking and rating system
+- Customer Satisfaction: Rating system for closed tickets
+- Business Intelligence: Strategic analytics for CEO dashboard
+- WhatsApp Metrics: Integration performance and usage statistics
+
+### 5. Enhanced UI/UX
+- Glassmorphism Design: Modern, professional interface with blurred backgrounds
+- Responsive Layout: Mobile-friendly design with adaptive components
+- Role-Based Navigation: Tailored interfaces for each user role
+- Advanced Filtering: Status-based ticket filtering and management
+
+### 6. Security Enhancements
+- Role-Based Authentication: JWT tokens with role-specific permissions
+- Input Validation: Comprehensive validation for all user inputs
+- Rate Limiting: Protection against abuse and spam
+- File Upload Security: Secure file handling with type validation
+
+---
+
+## 🎯 System Benefits
+
+### For Customers (Users)
+- ✅ Easy ticket creation via multiple channels (web, WhatsApp, email)
+- ✅ Real-time updates and notifications through preferred channels
+- ✅ Rating system for feedback and quality improvement
+- ✅ Professional support experience with tracking and transparency
+
+### For Support Staff
+- ✅ Role-based access to relevant tickets and features
+- ✅ Performance tracking and feedback system
+- ✅ Efficient ticket management tools with status tracking
+- ✅ WhatsApp integration for seamless customer communication
+
+### For Management
+- ✅ Performance analytics and reporting tools
+- ✅ Staff evaluation and rating system
+- ✅ Customer satisfaction insights and trends
+- ✅ Strategic business intelligence and metrics
+
+### For Organization
+- ✅ Scalable support system with role-based access
+- ✅ Quality assurance mechanisms and tracking
+- ✅ Data-driven decision making capabilities
+- ✅ Professional customer service with multi-channel support
+
+---
+
+## 📈 Success Metrics
+
+### **User Satisfaction**
+- Customer satisfaction ratings and trends
+- Response time metrics and tracking
+- Resolution time optimization
+- WhatsApp engagement rates
+
+### **Support Performance**
+- Executive performance ratings and feedback
+- Ticket resolution rates and efficiency
+- Customer feedback scores and trends
+- Support quality metrics
+
+### **Business Intelligence**
+- Ticket volume trends and patterns
+- Common issue identification and tracking
+- Customer satisfaction trends and analysis
+- Support cost analysis and optimization
+
+### **System Performance**
+- API response times and optimization
+- Database performance and efficiency
+- WhatsApp delivery rates and reliability
+- System uptime and availability metrics
+
+---
+
+## 🔧 Implementation Status
+
+### **Phase 1: Core RBAC System** ✅
+- ✅ Database schema implementation with role-based tables
+- ✅ User authentication with role-based JWT tokens
+- ✅ Permission-based middleware and access control
+- ✅ Role-based API endpoints and validation
+
+### **Phase 2: Role-Specific Features** ✅
+- ✅ User dashboard and ticket creation system
+- ✅ Support executive ticket management interface
+- ✅ Support manager analytics and performance tracking
+- ✅ CEO executive dashboard with strategic metrics
+- ✅ Admin system management and configuration
+
+### **Phase 3: Advanced Features** ✅
+- ✅ Performance rating system for executives
+- ✅ Customer satisfaction tracking and analytics
+- ✅ WhatsApp integration with multi-channel support
+- ✅ Analytics and reporting capabilities
+- ✅ Advanced security features and validation
+
+### **Phase 4: Enterprise Features** ✅
+- ✅ Multi-department support with role hierarchy
+- ✅ SLA management and tracking
+- ✅ Escalation workflows and automation
+- ✅ Advanced analytics and business intelligence
+- ✅ Integration APIs and external connectivity
+
+---
+
+This comprehensive ITSM system provides a complete enterprise-level customer support solution with role-based access control, multi-channel communication, performance tracking, and advanced analytics. The system is designed to scale with organizational growth while maintaining security, efficiency, and user satisfaction.

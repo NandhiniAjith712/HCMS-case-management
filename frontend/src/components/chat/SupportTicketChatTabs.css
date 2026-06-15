@@ -1,0 +1,585 @@
+.support-ticket-chat-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  width: min(100%, 900px);
+  margin: 0 auto;
+  background: #f3f4f6;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 8px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+/* Top participant tabs */
+.stc-tabs {
+  display: flex;
+  gap: 0;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-bottom: 1px solid #dbe1e8;
+  background: #ffffff;
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+}
+
+.stc-tab {
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: #f8fafc;
+  color: #64748b;
+  padding: 12px 28px;
+  min-height: 48px;
+  border-radius: 8px 8px 0 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-bottom-color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin: 0;
+  outline: none;
+}
+
+.stc-tab:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.stc-tab--active {
+  background: #ffffff;
+  color: #1e293b;
+  border-bottom-color: #2563eb;
+  font-weight: 700;
+}
+
+.stc-tab:focus,
+.stc-tab:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.stc-note {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+/* Participant header card */
+.stc-participant-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.stc-participant-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.stc-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.stc-participant-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stc-participant-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stc-participant-role {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.stc-ticket-badge {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: rgba(79, 70, 229, 0.08);
+  border: 1px solid rgba(79, 70, 229, 0.18);
+  color: #3730a3;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.stc-participant-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Call support popover (display only; no calling) */
+.stc-call-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.stc-icon-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 10px;
+  line-height: 1;
+  color: #374151;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stc-icon-button:hover {
+  background: #f1f5f9;
+}
+
+.stc-icon-button:focus,
+.stc-icon-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+.stc-call-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  padding: 12px;
+  min-width: 240px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.12);
+  z-index: 60;
+}
+
+.stc-call-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #111827;
+}
+
+.stc-call-number-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.stc-call-number {
+  font-weight: 700;
+  color: #111827;
+  user-select: text;
+}
+
+.stc-copy-btn {
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  color: #111827;
+  padding: 4px 8px;
+  border-radius: 10px;
+}
+
+.stc-copy-btn:hover {
+  background: #f3f4f6;
+}
+
+.stc-call-hours {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.stc-call-copy-status {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.stc-call-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 26px;
+  height: 26px;
+  border-radius: 10px;
+  color: #6b7280;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.stc-call-close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* Latest update strip */
+.stc-latest-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.stc-latest-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.stc-latest-text {
+  font-size: 0.82rem;
+  color: #92400e;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.stc-latest-label {
+  font-weight: 600;
+}
+
+/* Scrollable chat area */
+.stc-chat-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 8px 4px 6px;
+}
+
+.stc-chat-loading,
+.stc-chat-error,
+.stc-chat-empty {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 14px;
+  color: #6b7280;
+  text-align: center;
+  font-weight: 500;
+}
+
+.stc-chat-empty {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.stc-chat-error {
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  border-radius: 12px;
+  margin: 6px 10px;
+}
+
+.stc-loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #2563eb;
+  border-radius: 50%;
+  animation: stc-spin 0.9s linear infinite;
+  margin: 0 auto 10px;
+}
+
+.stc-loading-text {
+  margin-top: 6px;
+  color: #6b7280;
+}
+
+@keyframes stc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Each message row */
+.stc-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 7px 10px;
+}
+
+.stc-row--mine {
+  align-items: flex-end;
+}
+
+.stc-row--theirs {
+  align-items: flex-start;
+}
+
+.stc-sender-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.stc-sender-label--right {
+  color: #2563eb;
+}
+
+.stc-channel-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  line-height: 1.1;
+}
+
+.stc-channel-badge--email {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #7dd3fc;
+}
+
+.stc-channel-badge--whatsapp {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #86efac;
+}
+
+.stc-channel-badge--platform_chat {
+  background: #f3f4f6;
+  color: #4b5563;
+  border-color: #d1d5db;
+}
+
+.stc-channel-badge--internal {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fcd34d;
+}
+
+.stc-bubble {
+  max-width: min(72%, 640px);
+  padding: 10px 13px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  font-weight: 500;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.stc-bubble--theirs {
+  background: #eef2f7;
+  color: #111827;
+}
+
+.stc-bubble--mine {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.stc-time {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #6b7280;
+  padding: 0 4px;
+}
+
+.stc-time--right {
+  color: #93a3b8;
+}
+
+/* Status/activity updates are shown as info cards, not chat bubbles */
+.stc-update-card {
+  margin: 8px 10px;
+  padding: 10px 12px;
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  border-radius: 10px;
+}
+
+.stc-update-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #a16207;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.stc-update-text {
+  font-size: 0.9rem;
+  color: #78350f;
+  font-weight: 600;
+}
+
+.stc-update-time {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: #92400e;
+}
+
+/* Bottom composer */
+.stc-composer {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 8px 10px;
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+}
+
+.stc-composer-form {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.stc-input {
+  flex: 1;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #f8fafc;
+  padding: 12px 14px;
+  min-height: 44px;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
+.stc-input:focus {
+  border-color: rgba(37, 99, 235, 0.65);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.stc-send-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  background: #2563eb;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.stc-send-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #1d4ed8;
+}
+
+.stc-send-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+}
+
+.stc-send-icon {
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.stc-suggestions-row {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stc-suggestion-chip {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.stc-suggestion-chip:hover {
+  border-color: #93c5fd;
+  background: #f8fbff;
+}
+
+.stc-suggestions-error {
+  margin-top: 8px;
+  color: #b45309;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stc-suggestions-loading {
+  margin-top: 8px;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+

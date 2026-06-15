@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Agent Dashboard Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+        .test-section { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #17a2b8; font-weight: bold; }
+        button { padding: 12px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; border: 1px solid #e9ecef; }
+        .ticket-item { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 3px; border-left: 4px solid #007bff; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Quick Agent Dashboard Test</h1>
+    
+    <div class="test-section">
+        <h3>📋 Step 1: Check Local Storage</h3>
+        <button onclick="checkStorage()">Check Storage</button>
+        <div id="storageResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔐 Step 2: Test API Call</h3>
+        <button onclick="testAPI()">Test API</button>
+        <div id="apiResult"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🎯 Step 3: Show Tickets</h3>
+        <button onclick="showTickets()">Show Tickets</button>
+        <div id="ticketsResult"></div>
+    </div>
+
+    <script>
+        function checkStorage() {
+            const result = document.getElementById('storageResult');
+            result.innerHTML = '<h4>Local Storage Check:</h4>';
+            
+            const token = localStorage.getItem('userToken');
+            const userData = localStorage.getItem('userData');
+            
+            if (token) {
+                result.innerHTML += `<p class="success">✅ Token found: ${token.substring(0, 50)}...</p>`;
+            } else {
+                result.innerHTML += `<p class="error">❌ No token found!</p>`;
+            }
+            
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    result.innerHTML += `<p class="success">✅ User data found:</p>`;
+                    result.innerHTML += `<pre>${JSON.stringify(user, null, 2)}</pre>`;
+                } catch (e) {
+                    result.innerHTML += `<p class="error">❌ Invalid user data</p>`;
+                }
+            } else {
+                result.innerHTML += `<p class="error">❌ No user data found!</p>`;
+            }
+        }
+
+        async function testAPI() {
+            const result = document.getElementById('apiResult');
+            result.innerHTML = '<h4>API Test:</h4>';
+            
+            try {
+                const token = localStorage.getItem('userToken');
+                if (!token) {
+                    result.innerHTML += '<p class="error">❌ No token available</p>';
+                    return;
+                }
+
+                result.innerHTML += '<p class="info">🔄 Making API call...</p>';
+                
+                const response = await fetch('http://localhost:5000/api/tickets', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                result.innerHTML += `<p class="info">📡 Response status: ${response.status}</p>`;
+
+                if (response.ok) {
+                    const data = await response.json();
+                    result.innerHTML += `<p class="success">✅ API call successful!</p>`;
+                    result.innerHTML += `<p><strong>Total tickets:</strong> ${data.data?.length || 0}</p>`;
+                    
+                    if (data.data && data.data.length > 0) {
+                        result.innerHTML += '<p><strong>First 3 tickets:</strong></p>';
+                        data.data.slice(0, 3).forEach(ticket => {
+                            result.innerHTML += `<div class="ticket-item">
+                                <strong>#${ticket.id}</strong>: ${ticket.issue_title}<br>
+                                Status: ${ticket.status} | Assigned to: ${ticket.assigned_to}
+                            </div>`;
+                        });
+                    }
+                } else {
+                    const errorData = await response.json();
+                    result.innerHTML += `<p class="error">❌ API call failed</p>`;
+                    result.innerHTML += `<pre>${JSON.stringify(errorData, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.innerHTML += `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        async function showTickets() {
+            const result = document.getElementById('ticketsResult');
+            result.innerHTML = '<h4>All Tickets:</h4>';
+            
+            try {
+                const token = localStorage.getItem('userToken');
+                if (!token) {
+                    result.innerHTML += '<p class="error">❌ No token available</p>';
+                    return;
+                }
+
+                const response = await fetch('http://localhost:5000/api/tickets', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const tickets = data.data || [];
+                    
+                    result.innerHTML += `<p class="success">✅ Found ${tickets.length} tickets</p>`;
+                    
+                    // Group by status
+                    const statusGroups = {};
+                    tickets.forEach(ticket => {
+                        if (!statusGroups[ticket.status]) {
+                            statusGroups[ticket.status] = [];
+                        }
+                        statusGroups[ticket.status].push(ticket);
+                    });
+                    
+                    Object.keys(statusGroups).forEach(status => {
+                        result.innerHTML += `<h5>${status.toUpperCase()} (${statusGroups[status].length})</h5>`;
+                        statusGroups[status].forEach(ticket => {
+                            result.innerHTML += `<div class="ticket-item">
+                                <strong>#${ticket.id}</strong>: ${ticket.issue_title}<br>
+                                Assigned to: ${ticket.assigned_to} | Product: ${ticket.product || 'N/A'}
+                            </div>`;
+                        });
+                    });
+                } else {
+                    result.innerHTML += '<p class="error">❌ Failed to fetch tickets</p>';
+                }
+            } catch (error) {
+                result.innerHTML += `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        // Auto-run storage check on load
+        window.onload = function() {
+            checkStorage();
+        };
+    </script>
+</body>
+</html>

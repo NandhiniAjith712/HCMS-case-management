@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Agent Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+        .info { color: blue; }
+        button { padding: 10px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Agent Dashboard Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h3>📋 Step 1: Check Local Storage</h3>
+        <button onclick="checkLocalStorage()">Check Local Storage</button>
+        <div id="localStorageResult"></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>🔐 Step 2: Test Authentication</h3>
+        <button onclick="testAuth()">Test Authentication</button>
+        <div id="authResult"></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>📥 Step 3: Test Tickets API</h3>
+        <button onclick="testTicketsAPI()">Test Tickets API</button>
+        <div id="ticketsResult"></div>
+    </div>
+
+    <div class="debug-section">
+        <h3>🔄 Step 4: Refresh Dashboard</h3>
+        <button onclick="refreshDashboard()">Refresh Dashboard</button>
+        <div id="refreshResult"></div>
+    </div>
+
+    <script>
+        function checkLocalStorage() {
+            const result = document.getElementById('localStorageResult');
+            result.innerHTML = '<h4>Local Storage Contents:</h4>';
+            
+            const keys = ['userToken', 'userData', 'agentData', 'agentToken', 'userType', 'userId'];
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                const status = value ? `<span class="success">✅ Found</span>` : `<span class="error">❌ Missing</span>`;
+                result.innerHTML += `<p><strong>${key}:</strong> ${status}</p>`;
+                if (value) {
+                    try {
+                        const parsed = JSON.parse(value);
+                        result.innerHTML += `<pre>${JSON.stringify(parsed, null, 2)}</pre>`;
+                    } catch (e) {
+                        result.innerHTML += `<pre>${value}</pre>`;
+                    }
+                }
+            });
+        }
+
+        async function testAuth() {
+            const result = document.getElementById('authResult');
+            result.innerHTML = '<h4>Testing Authentication...</h4>';
+            
+            try {
+                const token = localStorage.getItem('userToken');
+                if (!token) {
+                    result.innerHTML += '<p class="error">❌ No token found in localStorage</p>';
+                    return;
+                }
+
+                result.innerHTML += `<p class="info">🔑 Token found: ${token.substring(0, 50)}...</p>`;
+                
+                const response = await fetch('http://localhost:5000/api/auth/verify', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    result.innerHTML += `<p class="success">✅ Authentication successful!</p>`;
+                    result.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    const errorData = await response.json();
+                    result.innerHTML += `<p class="error">❌ Authentication failed: ${response.status}</p>`;
+                    result.innerHTML += `<pre>${JSON.stringify(errorData, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.innerHTML += `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        async function testTicketsAPI() {
+            const result = document.getElementById('ticketsResult');
+            result.innerHTML = '<h4>Testing Tickets API...</h4>';
+            
+            try {
+                const token = localStorage.getItem('userToken');
+                if (!token) {
+                    result.innerHTML += '<p class="error">❌ No token found</p>';
+                    return;
+                }
+
+                const response = await fetch('http://localhost:5000/api/tickets', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    result.innerHTML += `<p class="success">✅ Tickets API successful!</p>`;
+                    result.innerHTML += `<p><strong>Total tickets:</strong> ${data.data?.length || 0}</p>`;
+                    
+                    if (data.data && data.data.length > 0) {
+                        result.innerHTML += '<h5>Sample tickets:</h5>';
+                        data.data.slice(0, 5).forEach(ticket => {
+                            result.innerHTML += `<p>• #${ticket.id}: "${ticket.issue_title}" (${ticket.status}) - Assigned to: ${ticket.assigned_to}</p>`;
+                        });
+                    }
+                    
+                    result.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    const errorData = await response.json();
+                    result.innerHTML += `<p class="error">❌ Tickets API failed: ${response.status}</p>`;
+                    result.innerHTML += `<pre>${JSON.stringify(errorData, null, 2)}</pre>`;
+                }
+            } catch (error) {
+                result.innerHTML += `<p class="error">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        function refreshDashboard() {
+            const result = document.getElementById('refreshResult');
+            result.innerHTML = '<h4>Refreshing Dashboard...</h4>';
+            
+            // Open Agent Dashboard in new tab
+            const dashboardUrl = 'http://localhost:3000/agentdashboard';
+            result.innerHTML += `<p class="info">🔄 Opening Agent Dashboard...</p>`;
+            result.innerHTML += `<p><a href="${dashboardUrl}" target="_blank">Click here to open Agent Dashboard</a></p>`;
+            
+            // Also try to refresh if already open
+            if (window.opener) {
+                window.opener.location.reload();
+            }
+        }
+
+        // Auto-run local storage check on load
+        window.onload = function() {
+            checkLocalStorage();
+        };
+    </script>
+</body>
+</html>

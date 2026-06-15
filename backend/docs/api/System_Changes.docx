@@ -1,0 +1,104 @@
+# System Changes
+
+---
+
+## Recent Changes Made
+
+### Database Schema Changes
+1. Email Field Optimization
+   - Changed from VARCHAR(100) to VARCHAR(30) across all tables
+   - Applied to: tickets, agents, communication_preferences
+   - Reason: Space efficiency and performance improvement
+
+2. Name Field Optimization
+   - Reduced from VARCHAR(100) to VARCHAR(30)
+   - Reason: Most names are shorter than 100 characters
+
+3. Mobile Number Standardization
+   - Changed to VARCHAR(15) for E.164 international format
+   - Added country code dropdown with type-to-filter
+   - Stores full number with country code (e.g., +911234567890)
+
+4. Added Issue Type Customization
+   - New field: issue_type_other VARCHAR(100)
+   - Allows custom issue specification when "Other" is selected
+
+5. S3 Bucket Storage for Files
+   - All images and PDFs are now stored in AWS S3 bucket
+   - Only the S3 URL is saved in the database and referenced in the system
+   - Improves scalability and file access
+
+---
+
+## New & Enhanced Features
+
+1. Escalation System
+- Automatic escalation when agents can't resolve within time limits
+- New status: 'escalated' in ticket tracking
+- Manager dashboard for handling escalated tickets
+- Escalation history with reasons and tracking
+
+2. URL Fetch & Login
+- Direct login and user info fetch via URL (e.g., https://localhost:3000/user@gmail.com)
+- Gmail ID and other info can be extracted from the URL for user identification
+
+3. Images/PDF in S3 Bucket
+- All images and PDFs are uploaded to S3
+- Only S3 URLs are stored and referenced in the system
+- No file blobs in the database
+
+4. Reply via Gmail API
+- Reply to tickets directly using the Gmail API
+- Automated email responses from the system
+
+5. WhatsApp Integration
+- WhatsApp as a channel for ticket creation and updates
+- Send and receive messages via WhatsApp
+
+6. New Endpoint: Import Gmail
+- API endpoint to import emails from Gmail
+- Automated ticket creation from imported emails
+
+7. Images Stored in S3, URL Placed in System
+- All images and documents are stored in S3
+- System references only the S3 URL for file access and sharing
+
+---
+
+## Existing Features (Short & Crisp)
+
+Customer Features
+- Ticket Submission: Web form with file attachments
+- Status Tracking: New → In Progress → Closed
+- File Uploads: Images and documents
+- Real-time Notifications: Email and WhatsApp
+- Reply System: Customer can respond to updates
+
+Admin Features
+- Dashboard: View and manage all tickets
+- Status Management: Update ticket status
+- Reply System: Respond to customer tickets
+- File Downloads: Access customer attachments
+- Filtering: By status and other criteria
+
+Technical Features
+- Database Management: Secure data storage
+- Security & Validation: Input validation and protection
+- File Handling: Secure upload/download system
+- Notification System: Multi-channel alerts
+
+---
+
+Next Steps for Implementation
+
+1. Database Migration: Update existing tables with new schema
+2. S3 Setup: Configure AWS S3 bucket for file storage
+3. Escalation Logic: Implement automatic escalation system
+4. URL Routing: Add URL-based access and info fetch functionality
+5. Source Detection: Implement message source tracking
+6. WhatsApp Enhancement: Add Gmail extraction and routing
+7. Gmail API Integration: Enable reply and import via Gmail API
+
+---
+
+This document provides a concise overview of all changes, new features, and existing functionality for the Tick System, with a focus on S3 storage, URL-based features, and multi-channel integration. 

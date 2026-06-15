@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Dashboard Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Agent Dashboard Debug Test</h1>
+    
+    <div class="test-section info">
+        <h3>📋 Current localStorage Contents</h3>
+        <button onclick="showLocalStorage()">Show localStorage</button>
+        <div id="localStorageContent"></div>
+    </div>
+    
+    <div class="test-section info">
+        <h3>🔐 Test Login</h3>
+        <button onclick="testLogin()">Login as Agent</button>
+        <div id="loginResult"></div>
+    </div>
+    
+    <div class="test-section info">
+        <h3>📋 Test Tickets API</h3>
+        <button onclick="testTicketsAPI()">Fetch Tickets</button>
+        <div id="ticketsResult"></div>
+    </div>
+    
+    <div class="test-section info">
+        <h3>🎯 Test Agent Dashboard Route</h3>
+        <button onclick="testAgentDashboard()">Go to Agent Dashboard</button>
+        <div id="dashboardResult"></div>
+    </div>
+
+    <script>
+        function showLocalStorage() {
+            const content = document.getElementById('localStorageContent');
+            const data = {};
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                try {
+                    data[key] = JSON.parse(value);
+                } catch {
+                    data[key] = value;
+                }
+            }
+            
+            content.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+        
+        async function testLogin() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = '<p>🔄 Logging in...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@example.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store the token and user data
+                    localStorage.setItem('userToken', data.data.token);
+                    localStorage.setItem('userData', JSON.stringify(data.data.user));
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Login Successful!</h4>
+                            <p><strong>User:</strong> ${data.data.user.name} (${data.data.user.email})</p>
+                            <p><strong>Role:</strong> ${data.data.user.role}</p>
+                            <p><strong>Token:</strong> ${data.data.token.substring(0, 20)}...</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error"><h4>❌ Login Failed</h4><p>${data.message}</p></div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error"><h4>❌ Error</h4><p>${error.message}</p></div>`;
+            }
+        }
+        
+        async function testTicketsAPI() {
+            const resultDiv = document.getElementById('ticketsResult');
+            const token = localStorage.getItem('userToken');
+            
+            if (!token) {
+                resultDiv.innerHTML = '<div class="error"><h4>❌ No token found</h4><p>Please login first</p></div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<p>🔄 Fetching tickets...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/tickets', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Tickets Fetched!</h4>
+                            <p><strong>Count:</strong> ${data.data.length} tickets</p>
+                            <p><strong>User Role:</strong> ${data.userRole}</p>
+                            <h5>Sample Tickets:</h5>
+                            <ul>
+                                ${data.data.slice(0, 5).map(ticket => 
+                                    `<li>#${ticket.id}: "${ticket.issue_title}" (${ticket.status})</li>`
+                                ).join('')}
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error"><h4>❌ Failed to fetch tickets</h4><p>${data.message}</p></div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error"><h4>❌ Error</h4><p>${error.message}</p></div>`;
+            }
+        }
+        
+        function testAgentDashboard() {
+            const resultDiv = document.getElementById('dashboardResult');
+            const userData = localStorage.getItem('userData');
+            
+            if (!userData) {
+                resultDiv.innerHTML = '<div class="error"><h4>❌ No user data found</h4><p>Please login first</p></div>';
+                return;
+            }
+            
+            try {
+                const user = JSON.parse(userData);
+                
+                if (user.role === 'support_agent' || user.role === 'admin') {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Ready for Agent Dashboard!</h4>
+                            <p><strong>User:</strong> ${user.name} (${user.role})</p>
+                            <p><strong>Token:</strong> ${localStorage.getItem('userToken') ? 'Present' : 'Missing'}</p>
+                            <p><a href="http://localhost:3000/agentdashboard" target="_blank">Open Agent Dashboard</a></p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error"><h4>❌ Wrong Role</h4><p>User role is ${user.role}, needs to be support_agent or admin</p></div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error"><h4>❌ Error parsing user data</h4><p>${error.message}</p></div>`;
+            }
+        }
+        
+        // Auto-run localStorage check on page load
+        window.onload = function() {
+            showLocalStorage();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+﻿Field	Type	Null	Key	Default	Extra
+id	int	NO	PRI	NULL	auto_increment
+tenant_id	int	NO	MUL	1	
+product_id	int	YES	MUL	NULL	
+module_id	int	YES	MUL	NULL	
+issue_type_id	varchar(100)	YES		NULL	
+issue_name	varchar(150)	NO		NULL	
+issue_description	text	YES		NULL	
+priority_level	enum('P0','P1','P2','P3')	YES		P2	
+response_time_minutes	int	NO		NULL	
+resolution_time_minutes	int	NO		NULL	
+business_hours_only	tinyint(1)	YES		1	
+escalation_time_minutes	int	YES		NULL	
+escalation_level	enum('manager','technical_manager','ceo')	YES		manager	
+is_active	tinyint(1)	YES		1	
+created_by	int	YES	MUL	NULL	
+updated_by	int	YES	MUL	NULL	
+created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP

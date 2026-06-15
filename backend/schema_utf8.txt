@@ -1,0 +1,89 @@
+﻿Field	Type	Null	Key	Default	Extra
+id	int	NO	PRI	NULL	auto_increment
+parent_ticket_id	int	YES	MUL	NULL	
+linked_to_parent_at	datetime	YES		NULL	
+linked_by	int	YES		NULL	
+linked_reason	varchar(500)	YES		NULL	
+tenant_id	int	NO	MUL	1	
+organization_id	int	YES		NULL	
+user_id	int	YES	MUL	NULL	
+name	varchar(30)	NO		NULL	
+email	varchar(100)	NO		NULL	
+mobile	varchar(20)	YES		NULL	
+country_code	varchar(10)	YES		NULL	
+product	varchar(100)	YES		NULL	
+product_id	int	YES	MUL	NULL	
+module	varchar(100)	YES		NULL	
+module_id	int	YES	MUL	NULL	
+sla_config_id	int	YES		NULL	
+sla_response_time_minutes	int	YES		NULL	
+sla_resolution_time_minutes	int	YES		NULL	
+sla_match_level	enum('EXACT','PRODUCT_ISSUE','PRODUCT_MODULE','PRODUCT_DEFAULT','TENANT_DEFAULT','SYSTEM_DEFAULT')	YES		NULL	
+sla_response_due_at	datetime	YES		NULL	
+sla_resolution_due_at	datetime	YES		NULL	
+description	text	NO		NULL	
+issue_type	varchar(50)	YES		NULL	
+issue_type_id	varchar(100)	YES		NULL	
+issue_type_other	varchar(100)	YES		NULL	
+issue_title	varchar(150)	YES		NULL	
+utm_description	varchar(255)	YES		NULL	
+attachment_name	varchar(255)	YES		NULL	
+attachment_type	varchar(191)	YES		NULL	
+attachment	longblob	YES		NULL	
+assigned_to	int	YES	MUL	NULL	
+current_level	enum('L1','L2','L3','MANAGER')	NO		L1	
+current_owner_id	int	YES		NULL	
+assigned_by	int	YES	MUL	NULL	
+assignment_source	enum('ai','fallback','fallback_l1_least_load','manual')	YES		NULL	
+assignment_reason	varchar(255)	YES		NULL	
+priority	enum('low','medium','high','urgent')	YES	MUL	medium	
+ai_predicted_priority	enum('low','medium','high','urgent')	YES		NULL	
+ai_priority_reason	text	YES		NULL	
+ai_priority_confidence	enum('low','medium','high')	YES		NULL	
+priority_overridden_by_manager	int	YES		NULL	
+priority_override_reason	text	YES		NULL	
+priority_overridden_at	datetime	YES		NULL	
+affected_users	varchar(50)	YES		single_user	
+business_impact	varchar(50)	YES		medium	
+priority_score	float	YES		NULL	
+priority_reason	text	YES		NULL	
+priority_source	varchar(20)	YES		ai	
+user_selected_priority	enum('low','medium','high','urgent')	YES		NULL	
+ai_suggested_priority	enum('low','medium','high','urgent')	YES		NULL	
+priority_match	tinyint(1)	YES		NULL	
+status	enum('new','in_progress','resolved','closed','escalated')	YES	MUL	new	
+source	varchar(50)	YES		web	
+customer_confirmation_status	enum('pending','approved','rejected')	NO		pending	
+rejection_reason	text	YES		NULL	
+customer_confirmed_at	datetime	YES		NULL	
+reopened_at	datetime	YES		NULL	
+category	varchar(100)	YES		NULL	
+subcategory	varchar(100)	YES		NULL	
+satisfaction_rating	int	YES		NULL	
+satisfaction_comment	text	YES		NULL	
+first_response_at	datetime	YES		NULL	
+resolved_at	datetime	YES		NULL	
+closed_at	datetime	YES		NULL	
+resolution_time	int	YES		NULL	
+eta_due_at	datetime	YES		NULL	
+eta_reason	varchar(500)	YES		NULL	
+eta_updated_by	int	YES		NULL	
+eta_updated_at	datetime	YES		NULL	
+sla_first_response_met	tinyint(1)	YES		NULL	
+sla_reminder_30_sent	tinyint(1)	YES		0	
+sla_reminder_15_sent	tinyint(1)	YES		0	
+inactivity_reminder_level	tinyint	YES		0	
+is_reopened	tinyint(1)	YES		0	
+created_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED
+updated_at	datetime	YES		CURRENT_TIMESTAMP	DEFAULT_GENERATED on update CURRENT_TIMESTAMP
+group_title	varchar(255)	YES		NULL	
+group_internal_note	text	YES		NULL	
+grouped_at	datetime	YES		NULL	
+reopen_count	int	NO		0	
+is_escalated	tinyint(1)	NO		0	
+escalation_level	int	NO		0	
+escalation_reason	varchar(64)	YES		NULL	
+escalation_comment	text	YES		NULL	
+escalated_at	datetime	YES		NULL	
+last_agent_reply_at	datetime	YES		NULL	
+reopen_reason	text	YES		NULL	
