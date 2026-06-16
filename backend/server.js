@@ -10,7 +10,7 @@ const http = require('http');
 
 const path = require('path');
 
-require('dotenv').config({ path: path.resolve(__dirname, 'config.env') });
+require('dotenv').config({ path: path.resolve(__dirname, 'modules/shared/config/config.env') });
 
 // Global error handlers to catch crashes
 process.on('uncaughtException', (err) => {
@@ -32,64 +32,72 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Import database and routes
 
-const { testConnection, initializeDatabase } = require('./database');
+// Database connection disabled - server will run without database
+// const { testConnection, initializeDatabase } = require('./modules/shared/database/database');
 
-const ticketsRouter = require('./routes/tickets');
+const ticketsRouter = require('./modules/case_management/routes/tickets');
 
-const repliesRouter = require('./routes/communication/replies');
+// Legacy replies module archived - moved to legacy/routes/communication/replies.js
+// const repliesRouter = require('./legacy/routes/communication/replies');
 
-const chatRouter = require('./routes/communication/chat');
+const chatRouter = require('./modules/case_management/routes/communication/chat');
 
-const usersRouter = require('./routes/core/users');
+const usersRouter = require('./modules/case_management/routes/core/users');
 
-const { router: whatsappRouter } = require('./routes/communication/whatsapp');
+const { router: whatsappRouter } = require('./modules/case_management/routes/communication/whatsapp');
 
-const whatsappMockRouter = require('./routes/communication/whatsapp-mock');
+const whatsappMockRouter = require('./modules/case_management/routes/communication/whatsapp-mock');
 
-const authRouter = require('./routes/auth');
+const authRouter = require('./modules/case_management/routes/auth');
 
-const slaRouter = require('./routes/management/sla');
+// HCMS clean auth module (JWT login + get-current-user, roles: employee/hr/admin/department_head)
+const hcmsAuthRouter = require('./modules/auth');
 
-const agentsRouter = require('./routes/agents');
+const slaRouter = require('./modules/case_management/routes/management/sla');
 
-const staffRouter = require('./routes/core/staff'); // New staff routes
+const agentsRouter = require('./modules/case_management/routes/agents');
 
-const supportRouter = require('./routes/support'); // Support integration routes
+const staffRouter = require('./modules/case_management/routes/core/staff'); // New staff routes
 
-const tenantsRouter = require('./routes/tenants'); // Tenant management routes
+const supportRouter = require('./modules/case_management/routes/support'); // Support integration routes
 
-const feedbackRouter = require('./routes/feedback');
+const tenantsRouter = require('./modules/case_management/routes/tenants'); // Tenant management routes
 
-const knowledgeRouter = require('./routes/knowledge');
+const feedbackRouter = require('./modules/case_management/routes/feedback');
 
-const settingsRouter = require('./routes/settings');
+// Tenant SPOC module archived - moved to legacy/routes/tenantSpoc.js
+// const tenantSpocRouter = require('./legacy/routes/tenantSpoc');
 
-const notificationsRouter = require('./routes/notifications');
+// Knowledge Base module archived - moved to legacy/routes/knowledge.js
+// const knowledgeRouter = require('./legacy/routes/knowledge');
 
-const tenantSpocRouter = require('./routes/tenantSpoc');
-const departmentsRouter = require('./routes/departments');
+const settingsRouter = require('./modules/case_management/routes/settings');
+
+const notificationsRouter = require('./modules/case_management/routes/notifications');
+
+const departmentsRouter = require('./modules/case_management/routes/departments');
 
 
 
 // Import auto-escalation and inactivity workflow
 
-const { startScheduledEscalation } = require('./scheduled-escalation');
+const { startScheduledEscalation } = require('./modules/case_management/services/scheduled-escalation');
 
-const { startScheduledInactivity } = require('./scheduled-inactivity');
+const { startScheduledInactivity } = require('./modules/case_management/services/scheduled-inactivity');
 
 
 
 // Import incoming email service (messages only, no ticket creation)
 
-const incomingEmailService = require('./services/incomingEmailService');
+const incomingEmailService = require('./modules/case_management/services/incomingEmailService');
 
 
 
 // Import WebSocket server and instance store
 
-const WebSocketServer = require('./websocket-server');
+const WebSocketServer = require('./modules/case_management/services/websocket-server');
 
-const wsInstanceStore = require('./websocket-instance');
+const wsInstanceStore = require('./modules/case_management/services/websocket-instance');
 
 
 
@@ -249,7 +257,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Static file serving for uploads
 
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static('modules/case_management/uploads'));
 
 
 
@@ -281,13 +289,13 @@ app.get('/health', (req, res) => {
 
 // Import tenant middleware
 
-const { setTenantContext } = require('./middleware/tenant');
+const { setTenantContext } = require('./modules/shared/middleware/tenant');
 
 
 
 // Skip tenant for paths that don't need it (reduces DB load and log spam)
 
-const skipTenantPaths = ['/health', '/uploads', '/api/auth/business-dashboard', '/api/ai/health', '/api/feedback/public'];
+const skipTenantPaths = ['/health', '/uploads', '/api/auth/business-dashboard', '/api/ai/health', '/api/feedback/public', '/api/v2/auth'];
 
 app.use((req, res, next) => {
 
@@ -307,11 +315,15 @@ app.use((req, res, next) => {
 
 app.use('/api/auth', authRouter);
 
+// HCMS clean auth (separate from legacy auth above): POST /api/v2/auth/login, GET /api/v2/auth/me
+app.use('/api/v2/auth', hcmsAuthRouter.routes);
+
 app.use('/api/tenants', tenantsRouter); // Tenant management (before other routes)
 
 app.use('/api/tickets', ticketsRouter);
 
-app.use('/api/replies', repliesRouter);
+// Legacy replies module archived - moved to legacy/routes/communication/replies.js
+// app.use('/api/replies', repliesRouter);
 
 app.use('/api/chat', chatRouter);
 
@@ -329,30 +341,34 @@ app.use('/api/staff', staffRouter); // Add staff routes
 
 app.use('/api/support', supportRouter); // Support integration routes
 
-app.use('/api/faqs', require('./routes/faqs')); // FAQ management and help
+// FAQ module archived - moved to legacy/routes/faqs.js
+// app.use('/api/faqs', require('./legacy/routes/faqs')); // FAQ management and help
 
-app.use('/api/assignments', require('./routes/management/assignments')); // Assignment management routes
+app.use('/api/assignments', require('./modules/case_management/routes/management/assignments')); // Assignment management routes
 
-app.use('/api/ticket-tasks', require('./routes/management/ticketTasks')); // Multi-task workflow routes
+app.use('/api/ticket-tasks', require('./modules/case_management/routes/management/ticketTasks')); // Multi-task workflow routes
 
-app.use('/api/ticket-links', require('./routes/ticketLinks')); // Internal-only linked tickets workflow
+app.use('/api/ticket-links', require('./modules/case_management/routes/ticketLinks')); // Internal-only linked tickets workflow
 
-app.use('/api/ai', require('./routes/ai')); // NVIDIA / OpenAI-compatible AI (health + future features)
+app.use('/api/ai', require('./modules/case_management/routes/ai')); // NVIDIA / OpenAI-compatible AI (health + future features)
 
 app.use('/api/feedback', feedbackRouter);
 
-app.use('/api/knowledge', knowledgeRouter.router);
+// Knowledge Base module archived - moved to legacy/routes/knowledge.js
+// app.use('/api/knowledge', knowledgeRouter.router);
 
 app.use('/api/settings', settingsRouter);
 
 app.use('/api/notifications', notificationsRouter);
 
-app.use('/api/tenant-spoc', tenantSpocRouter);
+// Tenant SPOC module archived - moved to legacy/routes/tenantSpoc.js
+// app.use('/api/tenant-spoc', tenantSpocRouter);
 app.use('/api/departments', departmentsRouter);
 
-app.use('/api/product-spoc', require('./routes/productSpoc'));
+// Product SPOC module archived - moved to legacy/routes/productSpoc.js
+// app.use('/api/product-spoc', require('./legacy/routes/productSpoc'));
 
-app.use('/api/mail-review', require('./routes/management/mailReview'));
+app.use('/api/mail-review', require('./modules/case_management/routes/management/mailReview'));
 
 
 
@@ -476,17 +492,9 @@ const startServer = async () => {
 
   try {
 
-    // Test database connection
-
-    await testConnection();
-
-    
-
-    // Initialize database tables
-
-    await initializeDatabase();
-
-    
+    // Database connection disabled - server will run without database
+    // await testConnection();
+    // await initializeDatabase();
 
     // Initialize WebSocket server and store for routes
 
