@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../../shared/database/database');
-const { authenticateToken } = require('../../shared/middleware/auth');
+const { authenticate } = require('../../auth/middleware/auth.middleware');
 const { verifyTenantAccess } = require('../../shared/middleware/tenant');
-const { mapRowToApi } = require('../services/appNotificationService');
+const { mapRowToApi, insertNotification, RECIPIENT, TYPE } = require('../services/appNotificationService');
 
 function normalizeRole(role) {
   return String(role || '').toLowerCase();
@@ -25,35 +25,27 @@ function inboxFilter(user, tenantId) {
     };
   }
 
-  if (r === 'admin') {
-    return {
-      joins: '',
-      where: `n.tenant_id = ?
-        AND NOT (n.type = 'COMMENT_ADDED' AND n.recipient_role IN ('AGENT', 'MANAGER'))`,
-      params: [tid],
-      countParams: [tid]
-    };
-  }
-
-  if (['support_manager', 'manager'].includes(r)) {
+  if (r === 'admin' || r === 'system_admin') {
     const sid = Number(user.id || user.agentId || 0);
     return {
       joins: '',
-      where: `n.tenant_id = ?
-        AND (
-          (n.recipient_staff_id = ? AND n.recipient_role = 'MANAGER')
-          OR (n.recipient_role = 'AGENT' AND EXISTS (
-            SELECT 1 FROM agents a2
-            WHERE a2.id = n.recipient_staff_id AND a2.manager_id = ?
-              AND (a2.tenant_id = ? OR a2.tenant_id IS NULL)
-          ))
-        )`,
-      params: [tid, sid, sid, tid],
-      countParams: [tid, sid, sid, tid]
+      where: 'n.tenant_id = ? AND n.recipient_staff_id = ? AND n.recipient_role = ?',
+      params: [tid, sid, 'MANAGER'],
+      countParams: [tid, sid, 'MANAGER']
     };
   }
 
-  if (['support_agent', 'agent'].includes(r)) {
+  if (['support_manager', 'manager', 'department_head'].includes(r)) {
+    const sid = Number(user.id || user.agentId || 0);
+    return {
+      joins: '',
+      where: 'n.tenant_id = ? AND n.recipient_staff_id = ? AND n.recipient_role = ?',
+      params: [tid, sid, 'MANAGER'],
+      countParams: [tid, sid, 'MANAGER']
+    };
+  }
+
+  if (['support_agent', 'agent', 'hr_executive'].includes(r)) {
     const sid = Number(user.id || user.agentId || 0);
     return {
       joins: '',
@@ -63,7 +55,7 @@ function inboxFilter(user, tenantId) {
     };
   }
 
-  if (['user', 'customer', 'org_spoc', 'product_spoc'].includes(r)) {
+  if (['user', 'customer', 'org_spoc', 'product_spoc', 'employee'].includes(r)) {
     const uid = Number(user.id || 0);
     if (r === 'org_spoc') {
       return {
@@ -100,31 +92,18 @@ async function userCanSeeNotification(user, tenantId, row) {
   if (r === 'ceo') {
     return String(row.recipient_role || '') === 'CEO';
   }
-  if (r === 'admin') {
-    if (row.type === 'COMMENT_ADDED' && ['AGENT', 'MANAGER'].includes(String(row.recipient_role || ''))) {
-      return false;
-    }
-    return true;
-  }
-  if (['support_manager', 'manager'].includes(r)) {
+  if (r === 'admin' || r === 'system_admin') {
     const sid = Number(user.id || user.agentId || 0);
-    if (row.recipient_role === 'MANAGER' && Number(row.recipient_staff_id) === sid) return true;
-    if (row.recipient_role === 'AGENT' && row.recipient_staff_id != null) {
-      const [ar] = await pool.execute(
-        `SELECT manager_id, tenant_id FROM agents WHERE id = ? LIMIT 1`,
-        [row.recipient_staff_id]
-      );
-      const mid = Number(ar[0]?.manager_id);
-      const at = Number(ar[0]?.tenant_id);
-      if (mid !== sid) return false;
-      return !at || at === tid;
-    }
-    return false;
+    return String(row.recipient_role || '') === 'MANAGER' && Number(row.recipient_staff_id) === sid;
   }
-  if (['support_agent', 'agent'].includes(r)) {
-    return row.recipient_role === 'AGENT' && Number(row.recipient_staff_id) === Number(user.id || user.agentId);
+  if (['support_manager', 'manager', 'department_head'].includes(r)) {
+    const sid = Number(user.id || user.agentId || 0);
+    return String(row.recipient_role || '') === 'MANAGER' && Number(row.recipient_staff_id) === sid;
   }
-  if (['user', 'customer', 'org_spoc', 'product_spoc'].includes(r)) {
+  if (['support_agent', 'agent', 'hr_executive'].includes(r)) {
+    return String(row.recipient_role || '') === 'AGENT' && Number(row.recipient_staff_id) === Number(user.id || user.agentId);
+  }
+  if (['user', 'customer', 'org_spoc', 'product_spoc', 'employee'].includes(r)) {
     if (Number(row.recipient_user_id) === Number(user.id)) return true;
     
     if (r === 'org_spoc' || r === 'product_spoc') {
@@ -145,7 +124,7 @@ async function userCanSeeNotification(user, tenantId, row) {
 }
 
 // GET /api/notifications?limit=&offset=
-router.get('/', authenticateToken, verifyTenantAccess, async (req, res) => {
+router.get('/', authenticate, verifyTenantAccess, async (req, res) => {
   try {
     const role = normalizeRole(req.user.role);
     if (role === 'business_dashboard' || role === 'super_admin') {
@@ -197,7 +176,7 @@ router.get('/', authenticateToken, verifyTenantAccess, async (req, res) => {
 });
 
 // PATCH /api/notifications/:id/read
-router.patch('/:id/read', authenticateToken, verifyTenantAccess, async (req, res) => {
+router.patch('/:id/read', authenticate, verifyTenantAccess, async (req, res) => {
   try {
     const role = normalizeRole(req.user.role);
     if (role === 'business_dashboard' || role === 'super_admin') {
@@ -226,7 +205,7 @@ router.patch('/:id/read', authenticateToken, verifyTenantAccess, async (req, res
 });
 
 // PATCH /api/notifications/mark-all-read
-router.patch('/mark-all-read', authenticateToken, verifyTenantAccess, async (req, res) => {
+router.patch('/mark-all-read', authenticate, verifyTenantAccess, async (req, res) => {
   try {
     const role = normalizeRole(req.user.role);
     if (role === 'business_dashboard' || role === 'super_admin') {
@@ -246,6 +225,231 @@ router.patch('/mark-all-read', authenticateToken, verifyTenantAccess, async (req
   } catch (e) {
     console.error('PATCH /notifications/mark-all-read error:', e);
     res.status(500).json({ success: false, message: 'Failed to update' });
+  }
+});
+
+// POST /api/notifications/backfill-hr (Admin only: backfill historical HR notifications)
+router.post('/backfill-hr', authenticate, verifyTenantAccess, async (req, res) => {
+  try {
+    const role = normalizeRole(req.user.role);
+    if (role !== 'system_admin' && role !== 'admin' && role !== 'hr_executive') {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const tenantId = Number(req.tenantId || req.user.tenant_id || 1) || 1;
+    let created = 0;
+    let skipped = 0;
+
+    // Find all active HR executives
+    const [hrAgents] = await pool.execute(
+      `SELECT id FROM users WHERE role = 'hr_executive' AND (tenant_id = ? OR tenant_id IS NULL) AND (is_active = 1 OR is_active IS NULL)`,
+      [tenantId]
+    );
+
+    for (const hr of hrAgents) {
+      const hrId = Number(hr.id);
+      if (!hrId) continue;
+
+      // Find all cases assigned to this HR
+      const [cases] = await pool.execute(
+        `SELECT id, title, status, created_by, created_at FROM cases
+         WHERE (tenant_id = ? OR tenant_id IS NULL) AND assigned_to = ?
+         ORDER BY id ASC`,
+        [tenantId, hrId]
+      );
+
+      for (const c of cases) {
+        const ticketId = Number(c.id);
+
+        // 1. Ticket assigned notification
+        const taRow = await insertNotification(pool, {
+          tenantId,
+          recipientRole: RECIPIENT.AGENT,
+          recipientStaffId: hrId,
+          recipientUserId: null,
+          title: 'Ticket assigned to you',
+          description: `${c.title || 'Support request'} — Ticket #${ticketId}`,
+          type: TYPE.TICKET_ASSIGNED,
+          ticketId,
+          dedupeKey: `bf:ta:${tenantId}:${ticketId}:${hrId}`
+        });
+        if (taRow) created++; else skipped++;
+
+        // 2. Status change notifications from ticket_activity
+        const [activities] = await pool.execute(
+          `SELECT id, action, details, created_at FROM ticket_activity
+           WHERE ticket_id = ? AND action IN ('status_changed', 'escalated', 'resolved', 'closed', 'reopened')
+           ORDER BY created_at ASC`,
+          [ticketId]
+        );
+        for (const act of activities) {
+          let newStatus = '';
+          try {
+            const d = JSON.parse(act.details || '{}');
+            newStatus = d.status?.new || d.status || act.action;
+          } catch (_) {
+            newStatus = act.action;
+          }
+          const stRow = await insertNotification(pool, {
+            tenantId,
+            recipientRole: RECIPIENT.AGENT,
+            recipientStaffId: hrId,
+            recipientUserId: null,
+            title: 'Ticket status updated',
+            description: `Ticket #${ticketId} status changed to ${newStatus} — ${c.title || ''}`.trim(),
+            type: TYPE.STATUS_CHANGED,
+            ticketId,
+            dedupeKey: `bf:st:${tenantId}:${ticketId}:${hrId}:${newStatus}:${act.id}`
+          });
+          if (stRow) created++; else skipped++;
+        }
+
+        // 3. Employee comment notifications
+        const [comments] = await pool.execute(
+          `SELECT id, message, sender_name, created_at FROM ticket_messages
+           WHERE ticket_id = ? AND sender_type = 'user'
+           ORDER BY created_at ASC`,
+          [ticketId]
+        );
+        for (const msg of comments) {
+          const cmRow = await insertNotification(pool, {
+            tenantId,
+            recipientRole: RECIPIENT.AGENT,
+            recipientStaffId: hrId,
+            recipientUserId: null,
+            title: 'New customer reply',
+            description: `${msg.sender_name || 'Customer'} on ${c.title || `Ticket #${ticketId}`}: ${(msg.message || '').slice(0, 140)}`,
+            type: TYPE.COMMENT_ADDED,
+            ticketId,
+            dedupeKey: `bf:cm:${tenantId}:${ticketId}:${hrId}:${msg.id}`
+          });
+          if (cmRow) created++; else skipped++;
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Backfill complete: ${created} notifications created, ${skipped} skipped (duplicates)`,
+      created,
+      skipped
+    });
+  } catch (e) {
+    console.error('POST /notifications/backfill-hr error:', e);
+    res.status(500).json({ success: false, message: 'Failed to backfill notifications', error: e.message });
+  }
+});
+
+// POST /api/notifications/backfill-managers (Admin/Dept Head: backfill historical escalation notifications)
+router.post('/backfill-managers', authenticate, verifyTenantAccess, async (req, res) => {
+  try {
+    const role = normalizeRole(req.user.role);
+    if (role !== 'system_admin' && role !== 'admin' && role !== 'department_head') {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const tenantId = Number(req.tenantId || req.user.tenant_id || 1) || 1;
+    let created = 0;
+    let skipped = 0;
+
+    // Find all department heads and system admins
+    const [managers] = await pool.execute(
+      `SELECT id, role FROM users WHERE role IN ('department_head', 'system_admin') AND (tenant_id = ? OR tenant_id IS NULL) AND (is_active = 1 OR is_active IS NULL)`,
+      [tenantId]
+    );
+
+    for (const mgr of managers) {
+      const mgrId = Number(mgr.id);
+      if (!mgrId) continue;
+      const mgrRole = mgr.role === 'system_admin' ? 'System Admin' : 'Department Head';
+
+      // Find all cases currently assigned to this manager in the escalation/review workflow
+      const [cases] = await pool.execute(
+        `SELECT id, title, status, dept_review_status, created_by, created_at, escalation_reason FROM cases
+         WHERE (tenant_id = ? OR tenant_id IS NULL) AND assigned_to = ? AND dept_review_status IS NOT NULL
+         ORDER BY id ASC`,
+        [tenantId, mgrId]
+      );
+
+      for (const c of cases) {
+        const ticketId = Number(c.id);
+        const reasonText = (c.escalation_reason || '').slice(0, 100);
+
+        const escRow = await insertNotification(pool, {
+          tenantId,
+          recipientRole: RECIPIENT.MANAGER,
+          recipientStaffId: mgrId,
+          recipientUserId: null,
+          title: `Ticket escalated to ${mgrRole}`,
+          description: `A ticket was escalated to you${reasonText ? `: ${reasonText}` : '. Please review.'} — ${c.title || `Ticket #${ticketId}`}`,
+          type: TYPE.STATUS_CHANGED,
+          ticketId,
+          dedupeKey: `bf:esc:${tenantId}:${ticketId}:${mgrId}`
+        });
+        if (escRow) created++; else skipped++;
+
+        // Status change notifications from ticket_activity
+        const [activities] = await pool.execute(
+          `SELECT id, action, details, created_at FROM ticket_activity
+           WHERE ticket_id = ? AND action IN ('escalated', 'resolved', 'closed', 'reopened', 'returned_to_hr')
+           ORDER BY created_at ASC`,
+          [ticketId]
+        );
+        for (const act of activities) {
+          let actStatus = '';
+          try {
+            const d = JSON.parse(act.details || '{}');
+            actStatus = d.status?.new || d.status || act.action;
+          } catch (_) {
+            actStatus = act.action;
+          }
+          const stRow = await insertNotification(pool, {
+            tenantId,
+            recipientRole: RECIPIENT.MANAGER,
+            recipientStaffId: mgrId,
+            recipientUserId: null,
+            title: 'Ticket status updated',
+            description: `Ticket #${ticketId} status changed to ${actStatus} — ${c.title || ''}`.trim(),
+            type: TYPE.STATUS_CHANGED,
+            ticketId,
+            dedupeKey: `bf:st:${tenantId}:${ticketId}:${mgrId}:${actStatus}:${act.id}`
+          });
+          if (stRow) created++; else skipped++;
+        }
+
+        // Employee comments
+        const [comments] = await pool.execute(
+          `SELECT id, message, sender_name, created_at FROM ticket_messages
+           WHERE ticket_id = ? AND sender_type = 'user'
+           ORDER BY created_at ASC`,
+          [ticketId]
+        );
+        for (const msg of comments) {
+          const cmRow = await insertNotification(pool, {
+            tenantId,
+            recipientRole: RECIPIENT.MANAGER,
+            recipientStaffId: mgrId,
+            recipientUserId: null,
+            title: 'New employee reply',
+            description: `${msg.sender_name || 'Employee'} on ${c.title || `Ticket #${ticketId}`}: ${(msg.message || '').slice(0, 140)}`,
+            type: TYPE.COMMENT_ADDED,
+            ticketId,
+            dedupeKey: `bf:cm:${tenantId}:${ticketId}:${mgrId}:${msg.id}`
+          });
+          if (cmRow) created++; else skipped++;
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Backfill complete: ${created} notifications created, ${skipped} skipped (duplicates)`,
+      created,
+      skipped
+    });
+  } catch (e) {
+    console.error('POST /notifications/backfill-managers error:', e);
+    res.status(500).json({ success: false, message: 'Failed to backfill notifications', error: e.message });
   }
 });
 

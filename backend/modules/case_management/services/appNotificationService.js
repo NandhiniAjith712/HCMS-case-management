@@ -1,6 +1,6 @@
 /**
  * Persisted in-app notifications + WebSocket fan-out.
- * CEO/admin: API returns all rows in tenant; WS receives all events (includeCeoAdmins).
+ * Notifications are delivered only to the targeted role/staff/user unless explicitly opted-in.
  */
 const crypto = require('crypto');
 const wsInstanceStore = require('./websocket-instance');
@@ -146,7 +146,7 @@ async function insertAndFanOut(pool, def) {
     const userIds = [];
     if (row.recipient_staff_id != null) staffIds.push(Number(row.recipient_staff_id));
     if (row.recipient_user_id != null) userIds.push(Number(row.recipient_user_id));
-    const includeCeo = def.includeCeoAdmins !== false;
+    const includeCeo = def.includeCeoAdmins === true;
     broadcastDelivery(row.tenant_id, api, {
       staffRecipientIds: staffIds,
       userRecipientIds: userIds,
@@ -409,7 +409,8 @@ async function notifyTicketCreated(pool, { tenantId, ticketId, userId, assignedT
   }
 
   if (assignedTo) {
-    await insertAndFanOut(pool, {
+    console.log(`[appNotification] Creating TICKET_ASSIGNED notification for agent ${assignedTo}, ticket ${ticketId}`);
+    const agentRow = await insertAndFanOut(pool, {
       tenantId,
       recipientRole: RECIPIENT.AGENT,
       recipientStaffId: assignedTo,
@@ -420,6 +421,7 @@ async function notifyTicketCreated(pool, { tenantId, ticketId, userId, assignedT
       ticketId,
       dedupeKey: `tc:${tenantId}:${ticketId}:a:${assignedTo}`
     });
+    console.log(`[appNotification] Agent notification result: ${agentRow ? 'created' : 'skipped/dup'}`);
     const mgrs = await getManagerIdsForAgent(pool, assignedTo);
     for (const mid of mgrs) {
       await insertAndFanOut(pool, {

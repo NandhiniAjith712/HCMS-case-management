@@ -3,7 +3,7 @@
  * Uses the same env vars as the Python setup; keep keys only in config.env.
  */
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../config.env') });
+require('dotenv').config({ path: path.resolve(__dirname, '../../../config.env') });
 
 const OpenAI = require('openai');
 

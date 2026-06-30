@@ -118,12 +118,9 @@ router.get('/', authenticateToken, verifyTenantAccess, async (req, res) => {
       params.push(ticket_id);
     }
     
-    query += ' ORDER BY ca.assigned_at DESC LIMIT ? OFFSET ?';
+    query += ` ORDER BY ca.assigned_at DESC LIMIT ${validLimit} OFFSET ${validOffset}`;
     
-    // Ensure parameters are strings (MySQL2 requires strings for LIMIT/OFFSET)
-    const finalParams = [...params, String(validLimit), String(validOffset)];
-    
-    const [assignments] = await pool.execute(query, finalParams);
+    const [assignments] = await pool.execute(query, params);
     
     // Get total count for pagination (tenant-filtered)
     let countQuery = 'SELECT COUNT(*) as total FROM current_assignments ca JOIN tickets t ON ca.ticket_id = t.id WHERE t.tenant_id = ?';

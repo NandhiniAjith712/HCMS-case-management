@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../../shared/database/database');
 const AuthError = require('../errors/AuthError');
+const { normalizeRole } = require('../constants/roles');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_here';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
@@ -19,9 +20,10 @@ function toPublicUser(row) {
     id: row.id,
     email: row.email,
     name: row.name,
-    role: row.role,
+    role: normalizeRole(row.role),
     department: row.department ?? null,
-    tenantId: row.tenant_id ?? null
+    tenantId: row.tenant_id ?? null,
+    tenant_id: row.tenant_id ?? null
   };
 }
 
@@ -34,7 +36,7 @@ function toPublicUser(row) {
  */
 function generateToken(user) {
   return jwt.sign(
-    { userId: user.id, role: user.role },
+    { userId: user.id, role: normalizeRole(user.role), tenant_id: user.tenant_id },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
   );

@@ -3,6 +3,21 @@ import { STORAGE_KEYS, isValidHcmsRole, ROLE_DASHBOARD_ROUTE } from '../modules/
 
 const AuthContext = createContext(null);
 
+/** Convert any role string into the canonical lowercase snake_case form used by routes. */
+function normalizeRole(role) {
+  return String(role || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_]/g, '');
+}
+
+/** Normalize the role inside a user object so HCMS components always see hr_manager / ceo / etc. */
+function normalizeUser(user) {
+  if (!user) return user;
+  return { ...user, role: normalizeRole(user.role) };
+}
+
 /** Decode a JWT payload without verification (safe for expiry checks). */
 function decodeJwtPayload(token) {
   if (!token || typeof token !== 'string') return null;
@@ -22,19 +37,20 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  /** Restore session from storage on mount. */
+  /** Restore session from sessionStorage only (tab-scoped, so each tab keeps its own login). */
   useEffect(() => {
     try {
-      const storedToken = localStorage.getItem(STORAGE_KEYS.TOKEN) || sessionStorage.getItem(STORAGE_KEYS.TOKEN);
-      const storedUser = localStorage.getItem(STORAGE_KEYS.USER) || sessionStorage.getItem(STORAGE_KEYS.USER);
+      const storedToken = sessionStorage.getItem(STORAGE_KEYS.TOKEN);
+      const storedUser = sessionStorage.getItem(STORAGE_KEYS.USER);
 
       if (storedToken && storedUser) {
         const payload = decodeJwtPayload(storedToken);
         if (payload && payload.exp && Date.now() < payload.exp * 1000) {
           const parsedUser = JSON.parse(storedUser);
-          if (isValidHcmsRole(parsedUser.role)) {
+          const normalizedUser = normalizeUser(parsedUser);
+          if (isValidHcmsRole(normalizedUser.role)) {
             setToken(storedToken);
-            setUser(parsedUser);
+            setUser(normalizedUser);
           }
         }
       }
@@ -45,36 +61,34 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  /** Persist token + user to both storage layers. */
+  /** Persist token + user to sessionStorage only (tab-scoped so concurrent logins work). */
   const persist = useCallback((newToken, newUser) => {
-    const userJson = JSON.stringify(newUser);
+    const normalizedUser = normalizeUser(newUser);
+    const userJson = JSON.stringify(normalizedUser);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    [localStorage, sessionStorage].forEach((s) => {
-      s.setItem(STORAGE_KEYS.TOKEN, newToken);
-      s.setItem(STORAGE_KEYS.USER, userJson);
-      s.setItem(STORAGE_KEYS.LOGIN_TIMESTAMP, expiresAt);
-    });
+    sessionStorage.setItem(STORAGE_KEYS.TOKEN, newToken);
+    sessionStorage.setItem(STORAGE_KEYS.USER, userJson);
+    sessionStorage.setItem(STORAGE_KEYS.LOGIN_TIMESTAMP, expiresAt);
   }, []);
 
   const login = useCallback((newToken, newUser) => {
+    const normalizedUser = normalizeUser(newUser);
     setToken(newToken);
-    setUser(newUser);
-    persist(newToken, newUser);
+    setUser(normalizedUser);
+    persist(newToken, normalizedUser);
   }, [persist]);
 
   const logout = useCallback(() => {
-    [localStorage, sessionStorage].forEach((s) => {
-      s.removeItem(STORAGE_KEYS.TOKEN);
-      s.removeItem(STORAGE_KEYS.USER);
-      s.removeItem(STORAGE_KEYS.LOGIN_TIMESTAMP);
-    });
+    sessionStorage.removeItem(STORAGE_KEYS.TOKEN);
+    sessionStorage.removeItem(STORAGE_KEYS.USER);
+    sessionStorage.removeItem(STORAGE_KEYS.LOGIN_TIMESTAMP);
     setToken(null);
     setUser(null);
   }, []);
 
   /** Re-fetch current user from /api/v2/auth/me to ensure token is still valid server-side. */
   const refreshUser = useCallback(async () => {
-    const currentToken = token || localStorage.getItem(STORAGE_KEYS.TOKEN);
+    const currentToken = token || sessionStorage.getItem(STORAGE_KEYS.TOKEN);
     if (!currentToken) return null;
     try {
       const res = await fetch('/api/v2/auth/me', {
@@ -86,9 +100,10 @@ export function AuthProvider({ children }) {
       }
       const data = await res.json();
       if (data.success && data.user) {
-        setUser(data.user);
-        persist(currentToken, data.user);
-        return data.user;
+        const normalizedUser = normalizeUser(data.user);
+        setUser(normalizedUser);
+        persist(currentToken, normalizedUser);
+        return normalizedUser;
       }
     } catch (e) {
       console.warn('[AuthContext] refreshUser failed:', e);

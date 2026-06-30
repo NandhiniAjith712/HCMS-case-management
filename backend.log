@@ -1,0 +1,1065 @@
+✅ Email service (SMTP) initialized successfully with dynamic SPOC Auto-CC interceptor
+🔌 Connecting to database...
+✅ Database connected successfully
+✅ Database connection successful
+🏗️  Initializing database schema...
+[v2/cases] Error dropping foreign key: Deadlock found when trying to get lock; try restarting transaction
+[v2/cases] Error adding new foreign key: Duplicate foreign key constraint name 'fk_case_messages_case'
+[v2/cases] Current case_attachments.message_id type: varchar
+employee_id trigger skipped: This command is not supported in the prepared statement protocol yet
+✅ departments table ready
+Department unique constraint skipped: Duplicate key name 'uq_departments_name'
+✅ Synced ticket category departments and subcategories
+✅ Updated users.role ENUM with employee, system_admin, and other roles
+✅ Created product_spoc_mapping table
+Agent department sync skipped: Unknown column 'a.primary_department_id' in 'where clause'
+⚠️ Could not drop product_id: Cannot drop column 'product_id': needed in a foreign key constraint 'sla_configurations_ibfk_1'
+⚠️ Could not drop module_id: Cannot drop column 'module_id': needed in a foreign key constraint 'sla_configurations_ibfk_2'
+⚠️ issue_name already dropped or does not exist
+⚠️ issue_description already dropped or does not exist
+⚠️ category already dropped or does not exist
+⚠️ category_description already dropped or does not exist
+⚠️ subcategory already dropped or does not exist
+⚠️ subcategory_description already dropped or does not exist
+⚠️ escalation_time_minutes already dropped or does not exist
+escalation_warning_threshold_minutes column already exists or error: Duplicate column name 'escalation_warning_threshold_minutes'
+escalation_breach_threshold_minutes column already exists or error: Duplicate column name 'escalation_breach_threshold_minutes'
+✅ Updated escalation_level ENUM to include department_head
+✅ Updated escalations.from_level ENUM to include department_head
+✅ Updated escalations.to_level ENUM to include department_head
+subcategory_id column already exists or error: Duplicate column name 'subcategory_id'
+✅ Removed 0 non-P2 SLA configurations
+Old unique constraint drop skipped: Cannot drop index 'unique_sla_config': needed in a foreign key constraint
+Unique constraint update skipped: Duplicate key name 'unique_sla_config'
+ℹ️ SLA configuration for HR Operations already exists
+ℹ️ SLA configuration for Payroll already exists
+⚠️ Department 'Learning & Development' not found, skipping SLA configuration
+ℹ️ SLA configuration for Compliance already exists
+ℹ️ SLA configuration for Administration already exists
+ℹ️ SLA configuration for IT Support already exists
+ℹ️ SLA configuration for Confidential Case Management already exists
+✅ Backfilled SLA configuration creators to admin id: 4
+Drop foreign key skipped: Can't DROP 'sla_timers_ibfk_1'; check that column/key exists
+Add cases foreign key skipped: Duplicate foreign key constraint name 'fk_sla_timers_case'
+Drop escalations foreign key skipped: Can't DROP 'escalations_ibfk_1'; check that column/key exists
+Add escalations cases foreign key skipped: Duplicate foreign key constraint name 'fk_escalations_case'
+✅ Ensured audit_logs table
+✅ Ensured ticket_info_requests table
+✅ Database tables and views initialized successfully
+✅ Database schema initialized
+🔌 Initializing WebSocket server on path /ws
+✅ WebSocket server initialized on path /ws
+🚀 Starting SLA monitoring service (runs every minute)
+🚀 Starting scheduled auto-escalation system...
+⏰ Will check for SLA reminders and breached tickets every 1 minute
+🔄 Will update SLA timer statuses automatically
+🕐 [28/6/2026, 11:52:27 am] Checking for breached tickets...
+🚀 Starting scheduled inactivity workflow...
+⏰ Will check every 30 minutes (12h, 24h, 36h, 48h reminders)
+🕐 [28/6/2026, 11:52:27 am] Checking for customer inactivity...
+📧 Email Intake Service started - polling for tickets and replies
+🚀 Server running on port 5100
+📊 Environment: production
+🔗 Health check: http://localhost:5100/health
+🔌 WebSocket server ready on ws://localhost:5100/ws
+📝 API Documentation:
+   - GET    /api/tickets - Get all tickets
+   - POST   /api/tickets - Create new ticket
+   - GET    /api/tickets/:id - Get single ticket
+   - PUT    /api/tickets/:id/status - Update ticket status
+   - DELETE /api/tickets/:id - Delete ticket
+   - GET    /api/replies/:ticketId - Get ticket replies
+   - POST   /api/replies - Add reply to ticket
+   - GET    /api/chat/messages/:ticketId - Get chat messages
+   - POST   /api/chat/messages - Add chat message
+   - PUT    /api/chat/messages/read/:ticketId - Mark messages as read
+   - GET    /api/chat/session/:ticketId - Get chat session
+   - POST   /api/chat/session - Join chat session
+   - PUT    /api/chat/typing - Update typing status
+   - PUT    /api/chat/session/leave - Leave chat session
+   - GET    /api/chat/unread/:ticketId/:userType - Get unread count
+   - GET    /api/v2/cases - Get all cases (HCMS v2)
+   - POST   /api/v2/cases - Create new case (HCMS v2)
+   - GET    /api/v2/cases/:id - Get single case (HCMS v2)
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ Inactivity workflow completed
+✅ SLA warning sent for timer 4, ticket 18
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+✅ SLA warning sent for timer 5, ticket 18
+✅ SLA warning sent for timer 6, ticket 19
+✅ SLA warning sent for timer 7, ticket 19
+✅ SLA warning sent for timer 8, ticket 20
+✅ SLA warning sent for timer 9, ticket 20
+✅ SLA warning sent for timer 10, ticket 21
+✅ SLA warning sent for timer 11, ticket 21
+✅ SLA warning sent for timer 14, ticket 23
+✅ SLA warning sent for timer 15, ticket 23
+✅ SLA warning sent for timer 20, ticket 26
+✅ SLA warning sent for timer 21, ticket 26
+✅ SLA warning sent for timer 24, ticket 28
+✅ SLA warning sent for timer 25, ticket 28
+✅ SLA warning sent for timer 34, ticket 33
+✅ SLA warning sent for timer 35, ticket 33
+✅ SLA warning sent for timer 40, ticket 36
+✅ SLA warning sent for timer 41, ticket 36
+🕐 [28/6/2026, 11:53:27 am] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 11:54:27 am] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 11:55:27 am] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 11:56:27 am] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 11:57:27 am] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 11:58:27 am] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 11:59:27 am] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:00:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:01:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:02:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:03:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:04:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:05:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:06:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:07:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:08:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:09:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:10:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:11:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:12:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🔍 Debug - JWT decoded: {
+  userId: 1,
+  role: 'employee',
+  tenant_id: 1,
+  iat: 1782565061,
+  exp: 1782651461
+}
+🔍 Debug - User found: {
+  id: 1,
+  email: 'employee@hcms.test',
+  name: 'Test Employee',
+  role: 'employee',
+  department: 'Operations',
+  manager_id: null,
+  is_active: 1,
+  tenant_id: 1,
+  product_scope_id: null
+}
+🔍 Debug - Final req.user: {
+  id: 1,
+  agentId: null,
+  email: 'employee@hcms.test',
+  name: 'Test Employee',
+  role: 'employee',
+  tenant_id: 1,
+  department: 'Operations',
+  primary_department_id: null,
+  primaryDeptId: null,
+  managerId: null,
+  product_scope_id: null,
+  permissions: []
+}
+🔍 Debug - JWT decoded: {
+  userId: 1,
+  role: 'employee',
+  tenant_id: 1,
+  iat: 1782565061,
+  exp: 1782651461
+}
+🔍 Debug - User found: {
+  id: 1,
+  email: 'employee@hcms.test',
+  name: 'Test Employee',
+  role: 'employee',
+  department: 'Operations',
+  manager_id: null,
+  is_active: 1,
+  tenant_id: 1,
+  product_scope_id: null
+}
+🔍 Debug - Final req.user: {
+  id: 1,
+  agentId: null,
+  email: 'employee@hcms.test',
+  name: 'Test Employee',
+  role: 'employee',
+  tenant_id: 1,
+  department: 'Operations',
+  primary_department_id: null,
+  primaryDeptId: null,
+  managerId: null,
+  product_scope_id: null,
+  permissions: []
+}
+🔍 Debug - JWT decoded: {
+  userId: 1,
+  role: 'employee',
+  tenant_id: 1,
+  iat: 1782565061,
+  exp: 1782651461
+}
+🔍 Debug - User found: {
+  id: 1,
+  email: 'employee@hcms.test',
+  name: 'Test Employee',
+  role: 'employee',
+  department: 'Operations',
+  manager_id: null,
+  is_active: 1,
+  tenant_id: 1,
+  product_scope_id: null
+}
+🔍 Debug - Final req.user: {
+  id: 1,
+  agentId: null,
+  email: 'employee@hcms.test',
+  name: 'Test Employee',
+  role: 'employee',
+  tenant_id: 1,
+  department: 'Operations',
+  primary_department_id: null,
+  primaryDeptId: null,
+  managerId: null,
+  product_scope_id: null,
+  permissions: []
+}
+[v2/cases] Creating case for tenant 1 creator 1 role employee
+[v2/cases] All active L1 assignments for tenant 1 : [
+  {
+    id: 5,
+    user_id: 2,
+    user_name: 'Test HR',
+    user_role: 'hr_executive',
+    assigned_at: 2026-06-27T13:14:50.000Z,
+    is_active: 1,
+    level_id: 4,
+    level: 'L1'
+  }
+]
+[assignmentService] validateLevelAssignment levels found: {
+  tenantId: 1,
+  level: 'L1',
+  levelCount: 1,
+  levels: [ { id: 4, level: 'L1', name: 'First Assignee', is_active: true } ]
+}
+[assignmentService] getAssigneeForLevel: {
+  tenantId: 1,
+  level: 'L1',
+  matchCount: 1,
+  firstMatch: {
+    user_id: 2,
+    user_name: 'Test HR',
+    level: 'L1',
+    level_id: 4,
+    assignment_id: 5
+  }
+}
+[v2/cases] L1 validation result: {
+  valid: true,
+  reason: undefined,
+  assignee: { user_id: 2, user_name: 'Test HR', user_role: 'hr_executive' },
+  levelId: 4
+}
+[v2/cases] Preparing notification for new case 39, assignedTo=2, userId=1
+[appNotification] Creating TICKET_ASSIGNED notification for agent 2, ticket 39
+[appNotification] Agent notification result: created
+[v2/cases] Notification sent for new case 39
+[SLA] Config for ticket 39: response_time=60min, resolution_time=1440min, warning_threshold=nullmin
+[SLA] Response deadline: Sun Jun 28 2026 13:12:52 GMT+0530 (India Standard Time) (60min from Sun Jun 28 2026 12:12:52 GMT+0530 (India Standard Time))
+[SLA] Resolution deadline: Mon Jun 29 2026 12:12:52 GMT+0530 (India Standard Time) (1440min from Sun Jun 28 2026 12:12:52 GMT+0530 (India Standard Time))
+[SLA] Initialized timers for ticket 39: response at 60min, resolution at 1440min
+🕐 [28/6/2026, 12:13:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+[assignmentService] validateLevelAssignment levels found: {
+  tenantId: 1,
+  level: 'L2',
+  levelCount: 1,
+  levels: [
+    {
+      id: 5,
+      level: 'L2',
+      name: 'Second level of escalation',
+      is_active: true
+    }
+  ]
+}
+[assignmentService] getAssigneeForLevel: {
+  tenantId: 1,
+  level: 'L2',
+  matchCount: 1,
+  firstMatch: {
+    user_id: 3,
+    user_name: 'Test Department Head',
+    level: 'L2',
+    level_id: 5,
+    assignment_id: 2
+  }
+}
+[escalationService] All active L2 assignments for tenant 1 : [
+  {
+    id: 2,
+    user_id: 3,
+    user_name: 'Test Department Head',
+    user_role: 'department_head',
+    assigned_at: 2026-06-26T11:59:17.000Z,
+    is_active: 1,
+    level_id: 5,
+    level: 'L2'
+  }
+]
+[escalationService] Updating case 39 to level L2 assignee 3 role department_head with reason: dep
+🕐 [28/6/2026, 12:14:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+[assignmentService] validateLevelAssignment levels found: {
+  tenantId: 1,
+  level: 'L3',
+  levelCount: 1,
+  levels: [
+    {
+      id: 6,
+      level: 'L3',
+      name: 'Third level of escalation',
+      is_active: true
+    }
+  ]
+}
+[assignmentService] getAssigneeForLevel: {
+  tenantId: 1,
+  level: 'L3',
+  matchCount: 1,
+  firstMatch: {
+    user_id: 4,
+    user_name: 'Test Admin',
+    level: 'L3',
+    level_id: 6,
+    assignment_id: 3
+  }
+}
+[escalationService] All active L3 assignments for tenant 1 : [
+  {
+    id: 3,
+    user_id: 4,
+    user_name: 'Test Admin',
+    user_role: 'system_admin',
+    assigned_at: 2026-06-26T12:00:21.000Z,
+    is_active: 1,
+    level_id: 6,
+    level: 'L3'
+  }
+]
+[escalationService] Updating case 39 to level L3 assignee 4 role system_admin with reason: admin
+🕐 [28/6/2026, 12:15:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:16:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:17:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:18:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:19:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:20:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:21:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:22:27 pm] Checking for customer inactivity...
+✅ Inactivity workflow completed
+🕐 [28/6/2026, 12:22:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:23:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:24:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:25:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:26:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:27:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:28:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:29:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:30:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:31:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:32:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:33:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:34:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:35:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:36:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+[assignmentService] validateLevelAssignment levels found: {
+  tenantId: 1,
+  level: 'L2',
+  levelCount: 1,
+  levels: [
+    {
+      id: 5,
+      level: 'L2',
+      name: 'Second level of escalation',
+      is_active: true
+    }
+  ]
+}
+[assignmentService] getAssigneeForLevel: {
+  tenantId: 1,
+  level: 'L2',
+  matchCount: 1,
+  firstMatch: {
+    user_id: 3,
+    user_name: 'Test Department Head',
+    level: 'L2',
+    level_id: 5,
+    assignment_id: 2
+  }
+}
+[escalationService] All active L2 assignments for tenant 1 : [
+  {
+    id: 2,
+    user_id: 3,
+    user_name: 'Test Department Head',
+    user_role: 'department_head',
+    assigned_at: 2026-06-26T11:59:17.000Z,
+    is_active: 1,
+    level_id: 5,
+    level: 'L2'
+  }
+]
+[escalationService] Updating case 35 to level L2 assignee 3 role department_head with reason: 234567890
+[assignmentService] validateLevelAssignment levels found: {
+  tenantId: 1,
+  level: 'L3',
+  levelCount: 1,
+  levels: [
+    {
+      id: 6,
+      level: 'L3',
+      name: 'Third level of escalation',
+      is_active: true
+    }
+  ]
+}
+[assignmentService] getAssigneeForLevel: {
+  tenantId: 1,
+  level: 'L3',
+  matchCount: 1,
+  firstMatch: {
+    user_id: 4,
+    user_name: 'Test Admin',
+    level: 'L3',
+    level_id: 6,
+    assignment_id: 3
+  }
+}
+[escalationService] All active L3 assignments for tenant 1 : [
+  {
+    id: 3,
+    user_id: 4,
+    user_name: 'Test Admin',
+    user_role: 'system_admin',
+    assigned_at: 2026-06-26T12:00:21.000Z,
+    is_active: 1,
+    level_id: 6,
+    level: 'L3'
+  }
+]
+[escalationService] Updating case 35 to level L3 assignee 4 role system_admin with reason: 5555
+🕐 [28/6/2026, 12:37:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:38:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:39:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:40:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:41:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:42:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:43:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:44:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:45:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:46:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:47:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:48:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:49:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:50:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:51:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:52:27 pm] Checking for customer inactivity...
+✅ Inactivity workflow completed
+🕐 [28/6/2026, 12:52:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:53:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:54:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:55:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:56:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:57:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:58:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 12:59:27 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:00:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:01:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:02:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:03:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:04:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:05:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:06:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:07:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:08:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:09:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:10:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:11:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:12:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:13:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:14:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:15:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:16:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:17:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:18:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:19:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:20:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:21:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:22:27 pm] Checking for customer inactivity...
+✅ Inactivity workflow completed
+🕐 [28/6/2026, 1:22:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:23:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:24:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:25:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached
+🕐 [28/6/2026, 1:26:28 pm] Checking for breached tickets...
+🏢 Processing 1 tenants
+
+📋 Processing tenant: Default Tenant (ID: 1)
+✅ No active tickets found for tenant Default Tenant
+
+✅ Auto-escalation completed for all tenants: 0 tickets escalated out of 0 breached

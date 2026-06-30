@@ -1,0 +1,713 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  ChevronLeft, Clock, Download, Paperclip, Send, CheckCircle, XCircle, FileSearch,
+  RotateCcw, MessageSquare, RefreshCw, UserPlus, ArrowUp, AlertCircle, X, Lock,
+  FileText, AlertTriangle
+} from 'lucide-react';
+
+const f = "'Inter',ui-sans-serif,system-ui,sans-serif";
+const card = { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 2px rgba(15,23,42,0.04)' };
+
+function Avatar({ initials, s = 32 }) {
+  return <div style={{ width: s, height: s, borderRadius: '50%', background: '#F1F5F9', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: s < 32 ? 10 : 12, fontWeight: 700, flexShrink: 0 }}>{initials}</div>;
+}
+
+function SBadge({ status }) {
+  const m = {
+    'open': { bg: '#DBEAFE', color: '#2563EB', label: 'Open' },
+    'new': { bg: '#DBEAFE', color: '#2563EB', label: 'New' },
+    'in_progress': { bg: '#EDE9FE', color: '#7C3AED', label: 'In Progress' },
+    'escalated': { bg: '#FEF3C7', color: '#D97706', label: 'Escalated' },
+    'resolved': { bg: '#D1FAE5', color: '#059669', label: 'Resolved' },
+    'closed': { bg: '#E2E8F0', color: '#475569', label: 'Closed' },
+    'waiting': { bg: '#FEF3C7', color: '#D97706', label: 'Waiting' },
+    'rejected': { bg: '#FEE2E2', color: '#DC2626', label: 'Rejected' },
+  };
+  const s = m[status] || { bg: '#F1F5F9', color: '#64748B', label: status };
+  return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 12px', borderRadius: 999, background: s.bg, color: s.color, fontSize: 13, fontWeight: 600 }}>{s.label}</span>;
+}
+
+const ACTIONABLE_STATUSES = ['open', 'new', 'in_progress', 'escalated', 'waiting'];
+
+function tIcon(a) {
+  const i = {
+    created: FileText, updated: RefreshCw, status_changed: RefreshCw, assigned: UserPlus,
+    commented: MessageSquare, escalated: ArrowUp, resolved: CheckCircle, closed: XCircle,
+    reopened: RotateCcw, edited: FileText, attachments_uploaded: Paperclip, attachment_deleted: X,
+    info_requested: AlertCircle, returned_to_hr: RotateCcw, under_investigation: FileSearch,
+    escalated_to_admin: ArrowUp, rejected: XCircle, pending_approval: Clock,
+    investigate: FileSearch, internal_note: MessageSquare, note: MessageSquare
+  };
+  return i[a] || FileText;
+}
+function tClr(a) {
+  const c = {
+    created: '#3B82F6', updated: '#64748B', status_changed: '#F59E0B', assigned: '#3B82F6',
+    commented: '#3B82F6', escalated: '#EF4444', resolved: '#22C55E', closed: '#22C55E',
+    reopened: '#3B82F6', edited: '#64748B', attachments_uploaded: '#3B82F6', attachment_deleted: '#EF4444',
+    info_requested: '#F59E0B', returned_to_hr: '#3B82F6', under_investigation: '#7C3AED',
+    escalated_to_admin: '#EF4444', rejected: '#EF4444', pending_approval: '#F59E0B',
+    investigate: '#7C3AED', internal_note: '#64748B', note: '#64748B'
+  };
+  return c[a] || '#64748B';
+}
+function tBg(a) {
+  const b = {
+    created: '#DBEAFE', updated: '#F1F5F9', status_changed: '#FEF3C7', assigned: '#DBEAFE',
+    commented: '#DBEAFE', escalated: '#FEE2E2', resolved: '#D1FAE5', closed: '#D1FAE5',
+    reopened: '#DBEAFE', edited: '#F1F5F9', attachments_uploaded: '#DBEAFE', attachment_deleted: '#FEE2E2',
+    info_requested: '#FEF3C7', returned_to_hr: '#DBEAFE', under_investigation: '#EDE9FE',
+    escalated_to_admin: '#FEE2E2', rejected: '#FEE2E2', pending_approval: '#FEF3C7',
+    investigate: '#EDE9FE', internal_note: '#F1F5F9', note: '#F1F5F9'
+  };
+  return b[a] || '#F1F5F9';
+}
+function tTitle(a) {
+  const t = {
+    created: 'Ticket created', updated: 'Updated', status_changed: 'Status changed', assigned: 'Assigned',
+    commented: 'Comment added', escalated: 'Escalated', resolved: 'Resolved', closed: 'Closed',
+    reopened: 'Reopened', edited: 'Edited', attachments_uploaded: 'Attachments uploaded', attachment_deleted: 'Attachment deleted',
+    info_requested: 'Information requested', returned_to_hr: 'Returned to HR', under_investigation: 'Under investigation',
+    escalated_to_admin: 'Escalated to admin', rejected: 'Rejected', pending_approval: 'Pending approval',
+    investigate: 'Investigate', internal_note: 'Internal note', note: 'Note added'
+  };
+  return t[a] || (a ? a.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Activity');
+}
+function fd(d) {
+  const date = new Date(d);
+  const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${date.getDate()} ${m[date.getMonth()]} · ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+}
+
+function formatTimelineDesc(item) {
+  let actor = item.performed_by_name || item.user_name;
+  if (!actor || actor === 'Unknown User' || actor === 'null') {
+    if (item.action === 'created') actor = 'System';
+    else if (item.performed_by) actor = 'User #' + item.performed_by;
+    else actor = 'System';
+  }
+  const details = item.details || {};
+  if (item.action === 'created') return `Raised by ${actor}.`;
+  if (item.action === 'assigned') return `${actor} assigned this to ${details.assignee_name || details.assignee || 'an agent'}.`;
+  if (item.action === 'reassigned') return `${actor} reassigned this to ${details.assignee_name || details.assignee || 'an agent'}.`;
+  if (item.action === 'commented') return `${actor} posted a comment.`;
+  if (item.action === 'escalated') return `Escalated from ${details.previous_level || 'L1'} to ${details.new_level || 'next level'} by ${actor}.`;
+  if (item.action === 'info_requested') return `${actor} requested: ${details.message || 'more information'}.`;
+  if (item.action === 'status_changed') {
+    const fmt = s => s ? s.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '';
+    const st = details.status || {};
+    return st.old ? `${actor} changed status from ${fmt(st.old)} to ${fmt(st.new)}.` : `${actor} changed status to ${fmt(st.new)}.`;
+  }
+  if (item.action === 'resolved') return `${actor} resolved this ticket.`;
+  if (item.action === 'closed') return `${actor} closed this ticket.`;
+  if (item.action === 'internal_note' || item.action === 'note') return `${actor} added an internal note.`;
+  if (item.action === 'attachments_uploaded') return `${actor} uploaded attachments.`;
+  if (item.action === 'returned_to_hr') return `${actor} returned this to HR.`;
+  if (item.action === 'investigate' || item.action === 'under_investigation') return `${actor} marked this as under investigation.`;
+  if (item.action === 'escalated_to_admin') return `${actor} escalated this to System Admin.`;
+  return `${actor} performed this action.`;
+}
+
+function getToken() {
+  return sessionStorage.getItem('hcmsToken') || localStorage.getItem('hcmsToken') || sessionStorage.getItem('token') || localStorage.getItem('token');
+}
+
+function buildTicket(data) {
+  const caseData = data.case || data.data || null;
+  if (!caseData) return null;
+  return {
+    ...caseData,
+    ticket_id: caseData.ticket_id || caseData.ticket_code || `TKT-${caseData.id}`,
+    assigned_hr_name: caseData.assignee_name || caseData.assigned_hr_name,
+    permissions: data.permissions || null,
+    conversation: (data.comments || []).map(c => ({
+      id: c.id,
+      name: c.sender_name,
+      initials: (c.sender_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase() || 'U',
+      roleTag: (c.sender_type || 'user').toUpperCase(),
+      tagBg: c.sender_type === 'employee' ? '#DBEAFE' : '#F1F5F9',
+      tagColor: c.sender_type === 'employee' ? '#3B82F6' : '#64748B',
+      time: c.created_at,
+      message: c.message,
+      attachments: c.attachments || []
+    })),
+    timeline: data.history || [],
+    internal_notes: data.internal_notes || [],
+    attachments: data.attachments || [],
+    info_requests: data.info_requests || [],
+    pendingEscalationConsent: data.pendingEscalationConsent || null
+  };
+}
+
+export default function AssignedCaseDetail({ basePath, title }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [ticket, setTicket] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [newComment, setNewComment] = useState('');
+  const [newNote, setNewNote] = useState('');
+  const [notes, setNotes] = useState(null);
+  const [caseAttachments, setCaseAttachments] = useState([]);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
+  const [commentAttachments, setCommentAttachments] = useState([]);
+  const [requestMessage, setRequestMessage] = useState('');
+  const [showRequestForm, setShowRequestForm] = useState(false);
+
+  useEffect(() => {
+    fetchTicket();
+  }, [id]);
+
+  const fetchTicket = async () => {
+    try {
+      setLoading(true);
+      const token = getToken();
+      const headers = { 'Authorization': `Bearer ${token}` };
+      const res = await fetch(`/api/v2/cases/${id}`, { headers });
+      if (!res.ok) throw new Error('Failed to fetch ticket');
+      const data = await res.json();
+      const t = buildTicket(data);
+      setTicket(t);
+      setNotes(t?.internal_notes || []);
+      setCaseAttachments(t?.attachments || []);
+    } catch (err) {
+      console.error('Error fetching ticket:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshTicket = async () => {
+    const token = getToken();
+    const refreshed = await fetch(`/api/v2/cases/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (refreshed.ok) {
+      const data = await refreshed.json();
+      const t = buildTicket(data);
+      setTicket(t);
+      setNotes(t?.internal_notes || []);
+      setCaseAttachments(t?.attachments || []);
+    }
+  };
+
+  const isSpecialCase = (t) => t?.reporting_mode === 'confidential' || t?.reporting_mode === 'sensitive' || t?.reporting_mode === 'anonymous';
+  const hasPerm = (t, key) => t?.permissions?.[key] ?? !isSpecialCase(t);
+  const canViewEmployee = (t) => hasPerm(t, 'can_view_employee_details');
+  const canComment = (t) => hasPerm(t, 'can_comment');
+
+  const RMBadge = ({ mode }) => {
+    const styles = {
+      normal: { bg: '#F1F5F9', color: '#64748B', label: 'Normal' },
+      confidential: { bg: '#FEF3C7', color: '#B45309', label: 'Confidential' },
+      sensitive: { bg: '#E0E7FF', color: '#4338CA', label: 'Sensitive' },
+      anonymous: { bg: '#F3E8FF', color: '#7E22CE', label: 'Anonymous' }
+    };
+    const s = styles[mode] || styles.normal;
+    return <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700, background: s.bg, color: s.color, display: 'inline-flex', alignItems: 'center', gap: 4 }}>{s.label}</span>;
+  };
+  const canPerformActions = (t) => hasPerm(t, 'can_perform_actions');
+  const canResolve = (t) => hasPerm(t, 'can_resolve');
+  const canClose = (t) => hasPerm(t, 'can_close');
+
+  const handleActionClick = (actionKey) => {
+    if (actionKey === 'resolve') {
+      setConfirmModal({
+        action: 'resolve', title: 'Mark as Resolved',
+        message: 'Are you sure you want to mark this ticket as resolved? The employee will be notified.',
+        confirmLabel: 'Yes, Resolve', requireReason: true, placeholder: 'Enter resolution notes...'
+      });
+    } else if (actionKey === 'close') {
+      setConfirmModal({
+        action: 'close', title: 'Close Ticket',
+        message: 'Closing will finalize this ticket. The employee will be notified.',
+        confirmLabel: 'Close Ticket', requireReason: true, placeholder: 'Enter closing reason...'
+      });
+    } else if (actionKey === 'escalate') {
+      setConfirmModal({
+        action: 'escalate', title: 'Escalate to Next Level',
+        message: 'This ticket will be escalated to the next configured escalation level. Add a reason below.',
+        confirmLabel: 'Escalate', requireReason: true, placeholder: 'Enter escalation reason...'
+      });
+    } else if (actionKey === 'request_info') {
+      setShowRequestForm(true);
+    } else {
+      performAction(actionKey);
+    }
+  };
+
+  const performAction = async (actionKey, reason = '') => {
+    try {
+      setActionLoading(actionKey);
+      const token = getToken();
+      const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+      if (actionKey === 'escalate') {
+        const res = await fetch(`/api/v2/cases/${id}/escalate`, {
+          method: 'POST', headers, body: JSON.stringify({ reason: reason || '' })
+        });
+        const resData = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(resData.message || resData.error || 'Failed to escalate');
+        }
+        if (resData.awaiting_consent) {
+          alert('Escalation consent request sent to the employee. The case will be escalated once approved.');
+          await refreshTicket();
+          return;
+        }
+      } else if (actionKey === 'resolve' || actionKey === 'close' || actionKey === 'in_progress') {
+        const newStatus = actionKey === 'resolve' ? 'resolved' : actionKey === 'close' ? 'closed' : 'in_progress';
+        const res = await fetch(`/api/v2/cases/${id}/status`, {
+          method: 'PATCH', headers, body: JSON.stringify({ status: newStatus })
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || errData.error || 'Failed to update status');
+        }
+      } else {
+        throw new Error('Unsupported action');
+      }
+      await refreshTicket();
+    } catch (err) {
+      console.error('Error performing action:', err);
+      alert(err.message || 'Failed to perform action');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleConfirmAction = () => {
+    if (!confirmModal) return;
+    const reason = (confirmModal.reasonInput || '').trim();
+    if (confirmModal.requireReason && !reason) return;
+    performAction(confirmModal.action, reason);
+    setConfirmModal(null);
+  };
+
+  const handleDownload = async (attachmentId, fileName) => {
+    try {
+      const token = getToken();
+      const res = await fetch(`/api/v2/cases/${id}/attachments/${attachmentId}/download`, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) throw new Error('Failed to download');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = fileName || 'attachment';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      console.error('Download failed:', err);
+      alert('Failed to download attachment');
+    }
+  };
+
+  const handleCommentAttachmentSelect = (e) => {
+    setCommentAttachments(prev => [...prev, ...Array.from(e.target.files)]);
+  };
+  const handleRemoveCommentAttachment = (index) => {
+    setCommentAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleNote = async () => {
+    if (!newNote.trim()) return;
+    try {
+      const token = getToken();
+      const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+      const res = await fetch(`/api/v2/cases/${id}/notes`, {
+        method: 'POST', headers, body: JSON.stringify({ text: newNote.trim() })
+      });
+      if (!res.ok) throw new Error('Failed to add note');
+      const data = await res.json();
+      setNotes(data.data || data.notes || []);
+      setNewNote('');
+      refreshTicket();
+    } catch (err) {
+      console.error('Error adding note:', err);
+      alert('Failed to add note');
+    }
+  };
+
+  const handleComment = async () => {
+    if (!newComment.trim()) return;
+    try {
+      const token = getToken();
+      const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+      const res = await fetch(`/api/v2/cases/${id}/comments`, {
+        method: 'POST', headers, body: JSON.stringify({ comment: newComment.trim() })
+      });
+      if (!res.ok) throw new Error('Failed to add comment');
+      const data = await res.json();
+      const messageId = data.data?.message_id || data.data?.conversation?.slice(-1)[0]?.id;
+      if (commentAttachments.length > 0 && messageId) {
+        const formData = new FormData();
+        commentAttachments.forEach(file => formData.append('files', file));
+        formData.append('message_id', messageId);
+        await fetch(`/api/v2/cases/${id}/attachments`, {
+          method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: formData
+        });
+      }
+      await refreshTicket();
+      setNewComment('');
+      setCommentAttachments([]);
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      alert('Failed to add comment');
+    }
+  };
+
+  const handleRequestInfo = async () => {
+    if (!requestMessage.trim()) return;
+    try {
+      const token = getToken();
+      const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+      const res = await fetch(`/api/v2/cases/${id}/request-info`, {
+        method: 'POST', headers, body: JSON.stringify({ message: requestMessage.trim() })
+      });
+      if (!res.ok) throw new Error('Failed to request information');
+      setRequestMessage('');
+      setShowRequestForm(false);
+      await refreshTicket();
+    } catch (err) {
+      console.error('Error requesting info:', err);
+      alert('Failed to request information');
+    }
+  };
+
+  if (loading) return (
+    <div style={{ fontFamily: f, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+      <div style={{ fontSize: 14, color: '#64748B' }}>Loading ticket details...</div>
+    </div>
+  );
+
+  if (error) return (
+    <div style={{ fontFamily: f, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+      <div style={{ textAlign: 'center' }}>
+        <AlertCircle size={48} color="#EF4444" style={{ marginBottom: 16 }} />
+        <div style={{ fontSize: 14, color: '#EF4444', marginBottom: 8 }}>Error loading ticket</div>
+        <div style={{ fontSize: 12, color: '#94A3B8' }}>{error}</div>
+      </div>
+    </div>
+  );
+
+  if (!ticket) return (
+    <div style={{ fontFamily: f, padding: 40, textAlign: 'center', color: '#64748B' }}>
+      <button onClick={() => navigate(basePath)} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20, background: 'transparent', border: 'none', color: '#64748B', fontSize: 13, cursor: 'pointer', padding: 0 }}>
+        <ChevronLeft size={16} />Back to tickets
+      </button>
+      Ticket not found.
+    </div>
+  );
+
+  const internalNotes = notes || ticket.internal_notes || [];
+  const conversation = ticket.conversation || [];
+  const timeline = (ticket.timeline || []).map(t => ({
+    ...t, icon: tIcon(t.action), iconColor: tClr(t.action), iconBg: tBg(t.action), title: tTitle(t.action), time: t.created_at ? fd(t.created_at) : '—'
+  }));
+  const canAct = ACTIONABLE_STATUSES.includes(ticket.status) && canPerformActions(ticket);
+
+  const actionList = [
+    ...(canResolve(ticket) ? [{ key: 'resolve', label: 'Mark as Resolved', Icon: CheckCircle, primary: true }] : []),
+    ...(canPerformActions(ticket) ? [{ key: 'in_progress', label: 'Investigate', Icon: FileSearch }] : []),
+    ...(canComment(ticket) ? [{ key: 'request_info', label: 'Request Information', Icon: AlertCircle }] : []),
+    ...(canPerformActions(ticket) && !ticket.pendingEscalationConsent ? [{ key: 'escalate', label: 'Escalate to Next Level', Icon: ArrowUp, danger: true }] : []),
+  ];
+  if (ticket.status === 'resolved' && canClose(ticket)) {
+    actionList.push({ key: 'close', label: 'Close Ticket', Icon: XCircle });
+  }
+
+  return (
+    <div style={{ fontFamily: f }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16, fontSize: 13, color: '#64748B' }}>
+        <button onClick={() => navigate(basePath)} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', color: '#64748B', fontSize: 13, cursor: 'pointer', padding: 0 }}>
+          <ChevronLeft size={15} />My tickets
+        </button>
+        <span>/</span>
+        <span style={{ color: '#1E293B', fontWeight: 600 }}>{ticket.ticket_id || `TKT-${ticket.id}`}</span>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1E293B', margin: 0 }}>Ticket {ticket.ticket_id || `TKT-${ticket.id}`}</h1>
+            <SBadge status={ticket.status || 'open'} />
+            <RMBadge mode={ticket.reporting_mode} />
+          </div>
+          <p style={{ fontSize: 14, color: '#64748B', margin: 0 }}>{ticket.title || '—'}</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#64748B', fontSize: 13 }}>
+          <Clock size={14} color="#94A3B8" />
+          <span>SLA: </span><span style={{ fontWeight: 600, color: '#EF4444' }}>{ticket.sla || ticket.escalation_level || '—'}</span>
+        </div>
+      </div>
+
+      {!canAct && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10, background: '#F1F5F9', border: '1px solid #E2E8F0', marginBottom: 20, fontSize: 13, color: '#64748B' }}>
+          <Lock size={15} color="#94A3B8" />
+          This ticket is view-only. Some actions are disabled because the ticket is not currently actionable.
+        </div>
+      )}
+
+      {ticket.pendingEscalationConsent && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 10, background: '#FEF3C7', border: '1px solid #FDE68A', marginBottom: 20, fontSize: 13, color: '#92400E' }}>
+          <AlertCircle size={15} color="#D97706" />
+          Awaiting employee consent for escalation to {ticket.pendingEscalationConsent.requested_level}. The case will be escalated once the employee approves.
+        </div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {caseAttachments.length > 0 && (
+            <div style={card}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Paperclip size={16} color="#64748B" />
+                <h2 style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', margin: 0 }}>Ticket Attachments</h2>
+              </div>
+              <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {caseAttachments.map(att => (
+                  <div key={att.id} onClick={() => handleDownload(att.id, att.file_name || att.name)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10, background: '#F8FAFC', border: '1px solid #E2E8F0', cursor: 'pointer' }}>
+                    <Paperclip size={18} color="#64748B" />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.file_name || att.name}</div>
+                      <div style={{ fontSize: 12, color: '#64748B' }}>{att.file_type || att.type}{att.file_size || att.size ? ` · ${(att.file_size || att.size) > 1048576 ? ((att.file_size || att.size) / 1048576).toFixed(2) + ' MB' : ((att.file_size || att.size) / 1024).toFixed(2) + ' KB'}` : ''}</div>
+                    </div>
+                    <Download size={16} color="#64748B" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div style={card}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #E2E8F0' }}>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', margin: 0 }}>Ticket Information</h2>
+            </div>
+            <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', rowGap: 20, columnGap: 24 }}>
+              {[
+                { label: 'TICKET ID', value: ticket.ticket_id || `TKT-${ticket.id}` },
+                { label: 'CATEGORY', value: ticket.category || '—' },
+                { label: 'SUBCATEGORY', value: ticket.subcategory || '—' },
+                { label: 'EMPLOYEE', value: ticket.reporter_name || '—' },
+                { label: 'REPORTING MODE', value: <RMBadge mode={ticket.reporting_mode} />, isBadge: true },
+                { label: 'PRIORITY', value: ticket.priority || 'medium', isPriority: true },
+                { label: 'STATUS', value: ticket.status || 'open', isStatus: true },
+                { label: 'ESCALATION LEVEL', value: ticket.escalation_level || '—' },
+                { label: 'ASSIGNED TO', value: ticket.assigned_hr_name || '—' },
+                { label: 'ESCALATION REASON', value: ticket.escalation_reason || '—' },
+                { label: 'SLA', value: ticket.sla || '—', slaColor: true },
+                { label: 'CREATED DATE', value: ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : '—' },
+                { label: 'UPDATED DATE', value: ticket.updated_at ? new Date(ticket.updated_at).toLocaleDateString() : '—' },
+              ].map(({ label, value, isPriority, isStatus, isBadge, slaColor }) => (
+                <div key={label}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>{label}</div>
+                  {isStatus ? <SBadge status={value} /> :
+                    isPriority ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: value === 'high' ? '#EF4444' : value === 'medium' ? '#F59E0B' : value === 'critical' ? '#991B1B' : '#94A3B8' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: value === 'high' ? '#EF4444' : value === 'medium' ? '#F59E0B' : value === 'critical' ? '#991B1B' : '#94A3B8' }} />{value}</span> :
+                    isBadge ? value :
+                    <div style={{ fontSize: 13, fontWeight: 600, color: slaColor ? '#64748B' : '#1E293B' }}>{value}</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={card}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #E2E8F0' }}>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', margin: 0 }}>Description</h2>
+            </div>
+            <p style={{ padding: '16px 20px', fontSize: 14, color: '#475569', lineHeight: 1.7, margin: 0 }}>{ticket.description || 'No description provided.'}</p>
+          </div>
+
+          <div style={card}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #E2E8F0' }}>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', margin: 0 }}>Conversation</h2>
+            </div>
+            <div style={{ padding: '16px 20px' }}>
+              {conversation.length === 0 ? (
+                <div style={{ fontSize: 13, color: '#94A3B8' }}>No conversation yet</div>
+              ) : (
+                conversation.map(m => (
+                  <div key={m.id} style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+                    <Avatar initials={m.initials || 'U'} s={34} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B' }}>{m.name || 'User'}</span>
+                        <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 4, background: m.tagBg || '#DBEAFE', color: m.tagColor || '#3B82F6' }}>{m.roleTag || 'USER'}</span>
+                        <span style={{ fontSize: 12, color: '#94A3B8' }}>· {m.time ? new Date(m.time).toLocaleString() : '—'}</span>
+                      </div>
+                      <p style={{ fontSize: 13, color: '#475569', lineHeight: 1.6, margin: 0 }}>{m.message || m.text || '—'}</p>
+                      {m.attachments && m.attachments.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                          {m.attachments.map(att => (
+                            <div key={att.id} onClick={() => handleDownload(att.id, att.file_name || att.name)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 8, background: '#F1F5F9', cursor: 'pointer' }}>
+                              <Paperclip size={12} color="#64748B" />
+                              <span style={{ fontSize: 12, color: '#0F172A', maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{att.file_name || att.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            {canComment(ticket) ? (
+            <div style={{ borderTop: '1px solid #E2E8F0', padding: '14px 20px' }}>
+              <textarea value={newComment} onChange={e => setNewComment(e.target.value)} placeholder="Write a reply..." rows={3}
+                style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: f, color: '#1E293B', outline: 'none', resize: 'none', boxSizing: 'border-box', marginBottom: 10 }} />
+              {commentAttachments.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+                  {commentAttachments.map((file, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: '#F1F5F9', borderRadius: 8, fontSize: 12, color: '#0F172A' }}>
+                      <Paperclip size={12} color="#64748B" />
+                      <span style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</span>
+                      <button onClick={() => handleRemoveCommentAttachment(i)} style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}><X size={14} /></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <input type="file" multiple onChange={handleCommentAttachmentSelect} style={{ display: 'none' }} id="comment-attachment-input" />
+                  <label htmlFor="comment-attachment-input" style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'transparent', border: 'none', color: '#64748B', fontSize: 13, fontWeight: 500, cursor: 'pointer', padding: 0 }}>
+                    <Paperclip size={15} />Attach
+                  </label>
+                </div>
+                <button onClick={handleComment} disabled={!newComment.trim()} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 16px', borderRadius: 999, background: newComment.trim() ? '#1E293B' : '#CBD5E1', color: '#FFFFFF', border: 'none', fontSize: 13, fontWeight: 600, cursor: newComment.trim() ? 'pointer' : 'not-allowed' }}>
+                  <Send size={13} />Send
+                </button>
+              </div>
+            </div>
+            ) : (
+            <div style={{ borderTop: '1px solid #E2E8F0', padding: '14px 20px', color: '#64748B', fontSize: 13, textAlign: 'center' }}>
+              <Lock size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} /> You do not have permission to add comments.
+            </div>
+            )}
+          </div>
+
+          <div style={card}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #E2E8F0' }}>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', margin: 0 }}>Investigation Notes</h2>
+              <p style={{ fontSize: 12, color: '#64748B', margin: '3px 0 0' }}>Internal notes visible to HR and management</p>
+            </div>
+            <div style={{ padding: '14px 20px' }}>
+              {internalNotes.length === 0 ? (
+                <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 12 }}>No notes yet</div>
+              ) : (
+                internalNotes.map(n => (
+                  <div key={n.id} style={{ padding: '12px 16px', background: '#F8FAFC', borderRadius: 10, border: '1px solid #F1F5F9', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#1E293B' }}>{n.author || '—'}</span>
+                      <span style={{ fontSize: 12, color: '#94A3B8' }}>{n.created_at ? new Date(n.created_at).toLocaleString() : '—'}</span>
+                    </div>
+                    <p style={{ fontSize: 13, color: '#475569', margin: 0, lineHeight: 1.6 }}>{n.text || n.note || '—'}</p>
+                  </div>
+                ))
+              )}
+              {canComment(ticket) && (
+                <>
+              <textarea value={newNote} onChange={e => setNewNote(e.target.value)} placeholder="Add internal notes..." rows={3}
+                style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: f, color: '#1E293B', outline: 'none', resize: 'vertical', boxSizing: 'border-box', marginBottom: 10, marginTop: 4 }} />
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button onClick={handleNote} disabled={!newNote.trim()} style={{ height: 34, padding: '0 16px', borderRadius: 999, background: newNote.trim() ? '#1E293B' : '#CBD5E1', color: '#FFFFFF', border: 'none', fontSize: 13, fontWeight: 600, cursor: newNote.trim() ? 'pointer' : 'not-allowed' }}>Save note</button>
+              </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={card}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #E2E8F0' }}>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', margin: 0 }}>Actions</h2>
+            </div>
+            <div style={{ padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {actionList.map(({ key, label, Icon, primary, danger }) => (
+                <button key={key} onClick={() => handleActionClick(key)} disabled={actionLoading === key} style={{
+                  width: '100%', height: 40, display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: actionLoading === key ? 'not-allowed' : 'pointer', fontFamily: f,
+                  background: primary ? '#1E293B' : danger ? '#FEF2F2' : '#FFFFFF',
+                  color: primary ? '#FFFFFF' : danger ? '#DC2626' : '#1E293B',
+                  border: primary ? 'none' : danger ? '1px solid #FECACA' : '1px solid #E2E8F0',
+                  opacity: actionLoading === key ? 0.6 : 1,
+                }}>
+                  <Icon size={15} />
+                  {actionLoading === key ? 'Processing...' : label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={card}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #E2E8F0' }}>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: '#1E293B', margin: 0 }}>Activity Timeline</h2>
+              <p style={{ fontSize: 12, color: '#64748B', margin: '3px 0 0' }}>Case history and escalation trail</p>
+            </div>
+            <div style={{ padding: '14px 20px' }}>
+              {timeline.length === 0 ? (
+                <div style={{ fontSize: 13, color: '#94A3B8' }}>No activity yet</div>
+              ) : (
+                timeline.map((t, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 12, paddingBottom: 16 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: t.iconBg || '#DBEAFE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {t.icon ? <t.icon size={13} color={t.iconColor || '#3B82F6'} /> : <FileText size={13} color="#3B82F6" />}
+                      </div>
+                      {i < timeline.length - 1 && <div style={{ width: 2, flex: 1, background: '#E2E8F0', marginTop: 4 }} />}
+                    </div>
+                    <div style={{ flex: 1, paddingBottom: 2 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1E293B', marginBottom: 2 }}>{t.title || 'Activity'}</div>
+                      <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.4, marginBottom: 2 }}>{formatTimelineDesc(t)}</div>
+                      <div style={{ fontSize: 11, color: '#94A3B8' }}>{t.time || '—'}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showRequestForm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowRequestForm(false)}>
+          <div style={{ background: '#FFFFFF', borderRadius: 16, width: 440, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#1E293B', margin: 0 }}>Request Additional Information</h3>
+              <button onClick={() => setShowRequestForm(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: '#94A3B8' }}><X size={18} /></button>
+            </div>
+            <div style={{ padding: '20px 24px' }}>
+              <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, margin: '0 0 16px' }}>Ask the employee for more details. This will set the ticket status to waiting.</p>
+              <textarea value={requestMessage} onChange={e => setRequestMessage(e.target.value)} placeholder="Enter your request..." rows={3}
+                style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: f, color: '#1E293B', outline: 'none', resize: 'none', boxSizing: 'border-box', marginBottom: 12 }} />
+            </div>
+            <div style={{ padding: '0 24px 20px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button onClick={() => setShowRequestForm(false)} style={{ height: 36, padding: '0 16px', borderRadius: 8, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={handleRequestInfo} disabled={!requestMessage.trim()} style={{ height: 36, padding: '0 16px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 600, cursor: requestMessage.trim() ? 'pointer' : 'not-allowed', background: '#1E293B', color: '#FFFFFF', opacity: requestMessage.trim() ? 1 : 0.5 }}>Send Request</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setConfirmModal(null)}>
+          <div style={{ background: '#FFFFFF', borderRadius: 16, width: 440, maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#1E293B', margin: 0 }}>{confirmModal.title}</h3>
+              <button onClick={() => setConfirmModal(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, color: '#94A3B8' }}><X size={18} /></button>
+            </div>
+            <div style={{ padding: '20px 24px' }}>
+              <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.6, margin: '0 0 16px' }}>{confirmModal.message}</p>
+              {confirmModal.requireReason && (
+                <textarea value={confirmModal.reasonInput || ''} onChange={e => setConfirmModal({ ...confirmModal, reasonInput: e.target.value })} placeholder={confirmModal.placeholder || 'Enter reason...'} rows={3}
+                  style={{ width: '100%', padding: 12, borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 13, fontFamily: f, color: '#1E293B', outline: 'none', resize: 'none', boxSizing: 'border-box', marginBottom: 12 }} />
+              )}
+            </div>
+            <div style={{ padding: '0 24px 20px', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button onClick={() => setConfirmModal(null)} style={{ height: 36, padding: '0 16px', borderRadius: 8, background: '#FFFFFF', border: '1px solid #E2E8F0', color: '#475569', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={handleConfirmAction} disabled={confirmModal.requireReason && !(confirmModal.reasonInput || '').trim()}
+                style={{ height: 36, padding: '0 16px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: '#1E293B', color: '#FFFFFF', opacity: (confirmModal.requireReason && !(confirmModal.reasonInput || '').trim()) ? 0.5 : 1 }}>{confirmModal.confirmLabel}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

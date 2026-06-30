@@ -14,13 +14,18 @@ const extractTenant = async (req) => {
     const subdomain = host.split('.')[0];
     
     if (subdomain && subdomain !== 'www' && subdomain !== 'api' && subdomain !== 'localhost') {
-      const [tenants] = await pool.execute(
-        'SELECT * FROM tenants WHERE subdomain = ? AND status = \'active\'',
-        [subdomain]
-      );
-      if (tenants.length > 0) {
-        if (DEBUG) console.log(`✅ Tenant found via subdomain: ${subdomain}`);
-        return tenants[0];
+      try {
+        const [tenants] = await pool.execute(
+          'SELECT * FROM tenants WHERE subdomain = ? AND status = \'active\'',
+          [subdomain]
+        );
+        if (tenants.length > 0) {
+          if (DEBUG) console.log(`✅ Tenant found via subdomain: ${subdomain}`);
+          return tenants[0];
+        }
+      } catch (error) {
+        // subdomain column might not exist, continue to other methods
+        if (DEBUG) console.log('⚠️ Subdomain column not found or query failed, trying other methods');
       }
     }
     
@@ -117,12 +122,17 @@ const extractTenant = async (req) => {
     // Method 4: Default tenant (for development/testing)
     if (process.env.NODE_ENV === 'development') {
       // Try to find default tenant by subdomain
-      const [defaultTenants] = await pool.execute(
-        'SELECT * FROM tenants WHERE subdomain = \'default\' AND status = \'active\' LIMIT 1'
-      );
-      if (defaultTenants.length > 0) {
-        if (DEBUG) console.log(`⚠️ Using default tenant for development: ${defaultTenants[0].name} (ID: ${defaultTenants[0].id})`);
-        return defaultTenants[0];
+      try {
+        const [defaultTenants] = await pool.execute(
+          'SELECT * FROM tenants WHERE subdomain = \'default\' AND status = \'active\' LIMIT 1'
+        );
+        if (defaultTenants.length > 0) {
+          if (DEBUG) console.log(`⚠️ Using default tenant for development: ${defaultTenants[0].name} (ID: ${defaultTenants[0].id})`);
+          return defaultTenants[0];
+        }
+      } catch (error) {
+        // subdomain column might not exist, skip to next method
+        if (DEBUG) console.log('⚠️ Subdomain column not found, trying to get first active tenant');
       }
       
       // If no default tenant, get first active tenant
@@ -185,14 +195,21 @@ const setTenantContext = async (req, res, next) => {
     const tenant = await extractTenant(req);
     
     if (!tenant) {
-      // In development, allow requests without tenant (will use default)
-      if (process.env.NODE_ENV === 'development') {
-        if (DEBUG) console.log('⚠️ No tenant found, continuing in development mode');
+      // console.log(`⚠️ No tenant found for request: ${req.method} ${req.originalUrl}`);
+      // console.log(`   Host: ${req.get('host')}`);
+      // console.log(`   X-Tenant-ID header: ${req.headers['x-tenant-id']}`);
+      // console.log(`   Authorization header: ${req.headers['authorization'] ? 'Present' : 'Missing'}`);
+      
+      // In development OR localhost, allow requests without tenant (will use default)
+      const isLocalhost = req.get('host') && (req.get('host').includes('localhost') || req.get('host').includes('127.0.0.1'));
+      if (process.env.NODE_ENV === 'development' || isLocalhost) {
+        // console.log('⚠️ No tenant found, continuing (tenant will be set by verifyTenantAccess)');
         req.tenant = null;
         req.tenantId = null;
         return next();
       }
       
+      console.error('❌ Tenant not found in production mode');
       return res.status(400).json({
         success: false,
         message: 'Tenant not found or inactive. Please check your subdomain or provide X-Tenant-ID header.'
@@ -224,7 +241,12 @@ const setTenantContext = async (req, res, next) => {
  */
 const verifyTenantAccess = async (req, res, next) => {
   try {
+    // console.log(`🔍 verifyTenantAccess called for: ${req.method} ${req.originalUrl}`);
+    // console.log(`   req.user:`, req.user ? { id: req.user.id, tenant_id: req.user.tenant_id } : 'null');
+    // console.log(`   req.tenantId before: ${req.tenantId}`);
+    
     if (!req.user) {
+      console.error('❌ No user in request - authentication required');
       return res.status(401).json({
         success: false,
         message: 'Authentication required'
@@ -233,7 +255,7 @@ const verifyTenantAccess = async (req, res, next) => {
     
     // If no tenant context was set, use user's tenant_id
     if (!req.tenantId && req.user.tenant_id) {
-        if (DEBUG) console.log(`🏢 Setting tenant_id from user: ${req.user.tenant_id}`);
+        // console.log(`🏢 Setting tenant_id from user: ${req.user.tenant_id}`);
       req.tenantId = req.user.tenant_id;
       
       // Also fetch and set the full tenant object
@@ -246,6 +268,9 @@ const verifyTenantAccess = async (req, res, next) => {
           req.tenant = tenants[0];
           res.locals.tenant = tenants[0];
           res.locals.tenantId = req.user.tenant_id;
+          // console.log(`🏢 Tenant fetched from user: ${tenants[0].name} (ID: ${tenants[0].id})`);
+        } else {
+          // console.warn(`⚠️ User's tenant_id ${req.user.tenant_id} not found or inactive in tenants table`);
         }
       } catch (error) {
         console.error('Error fetching tenant:', error);
@@ -254,10 +279,10 @@ const verifyTenantAccess = async (req, res, next) => {
     
     // Trust the user's JWT/DB tenant_id as the authoritative source.
     // setTenantContext may have set a stale/fallback tenantId before authenticateToken ran.
-    const userTenantId = req.user.tenant_id;
+    const userTenantId = req.user.tenant_id || req.user.tenantId;
     if (userTenantId) {
       if (req.tenantId && req.tenantId !== userTenantId) {
-        if (DEBUG) console.warn(`⚠️ Tenant mismatch resolved: overriding request tenant ${req.tenantId} with user's tenant ${userTenantId}`);
+        // console.warn(`⚠️ Tenant mismatch resolved: overriding request tenant ${req.tenantId} with user's tenant ${userTenantId}`);
       }
       req.tenantId = userTenantId;
 
@@ -272,23 +297,21 @@ const verifyTenantAccess = async (req, res, next) => {
             req.tenant = tenants[0];
             res.locals.tenant = tenants[0];
             res.locals.tenantId = userTenantId;
+            // console.log(`🏢 Tenant object set: ${tenants[0].name} (ID: ${tenants[0].id})`);
+          } else {
+            // console.warn(`⚠️ Tenant ID ${userTenantId} not found or inactive, but will allow request to proceed`);
           }
         } catch (error) {
           console.error('Error fetching tenant:', error);
         }
       }
     } else if (!req.tenantId) {
-      // In development, allow if no tenant context
-      if (process.env.NODE_ENV === 'development') {
-        if (DEBUG) console.log('⚠️ No tenant context found, continuing in development mode');
-        return next();
-      }
-      return res.status(400).json({
-        success: false,
-        message: 'Tenant context required'
-      });
+      // Fallback: use default tenant ID 1 for HCMS users without explicit tenant
+      // console.log('⚠️ No tenant context found, defaulting to tenant_id 1');
+      req.tenantId = 1;
     }
-
+    
+    // console.log(`   req.tenantId after: ${req.tenantId}`);
     next();
   } catch (error) {
     console.error('Tenant access verification error:', error);

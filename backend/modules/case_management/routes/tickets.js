@@ -1044,13 +1044,14 @@ const getSimilarTicketRecommendations = async ({ tenantId, ticketId, limit = 8, 
   if (!refresh) {
     // Prefer cached AI suggestions (not dismissed) for fast ticket view.
     try {
+      const limitValue = Math.max(1, Math.min(Number(limit || 8), 200));
       const [cached] = await pool.execute(
         `SELECT suggested_ticket_id AS id, score, reasons_json, updated_at
          FROM similar_ticket_ai_suggestions
          WHERE tenant_id = ? AND ticket_id = ? AND dismissed_at IS NULL
          ORDER BY score DESC, updated_at DESC
-         LIMIT ?`,
-        [tenantId, ticketId, Math.max(1, Math.min(Number(limit || 8), 200))]
+         LIMIT ${limitValue}`,
+        [tenantId, ticketId]
       );
       if (cached?.length) {
         const ids = cached

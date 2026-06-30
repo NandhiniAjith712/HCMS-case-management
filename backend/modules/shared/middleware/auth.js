@@ -114,11 +114,17 @@ const authenticateToken = async (req, res, next) => {
     const roleLooksStaff = ['support_agent', 'support_manager', 'ceo', 'admin', 'super_admin', 'agent', 'manager'].includes(decodedRole);
 
     const fetchAgentById = async () => {
-      const [agents] = await pool.execute(
-        'SELECT id, name, email, role, tenant_id, department, primary_department_id, manager_id FROM agents WHERE id = ? AND is_active = TRUE',
-        [userId]
-      );
-      return agents[0] || null;
+      try {
+        const [agents] = await pool.execute(
+          'SELECT id, name, email, role, tenant_id, department, primary_department_id, manager_id FROM agents WHERE id = ? AND is_active = TRUE',
+          [userId]
+        );
+        return agents[0] || null;
+      } catch (err) {
+        // agents.tenant_id may not exist yet; fall back to users table
+        if (err.code === 'ER_BAD_FIELD_ERROR') return null;
+        throw err;
+      }
     };
 
     const fetchUserById = async () => {

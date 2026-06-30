@@ -15,10 +15,12 @@ function HcmsLogin() {
   // If already logged in, redirect to the role-based dashboard.
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
-      const target = ROLE_DASHBOARD_ROUTE[user.role] || '/hcms/employee';
-      navigate(target, { replace: true });
+      const target = ROLE_DASHBOARD_ROUTE[user.role] || '/hcms/dashboard';
+      if (location.pathname !== target) {
+        navigate(target, { replace: true });
+      }
     }
-  }, [isLoading, isAuthenticated, user, navigate]);
+  }, [isLoading, isAuthenticated, user, navigate, location.pathname]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -53,13 +55,11 @@ function HcmsLogin() {
 
       login(data.token, data.user);
 
-      // Redirect to originally requested page, or role-based dashboard.
+      // If the user was redirected to login from a protected page, send them back.
       if (from) {
         navigate(from, { replace: true });
-      } else {
-        const target = ROLE_DASHBOARD_ROUTE[data.user.role] || '/hcms/employee';
-        navigate(target, { replace: true });
       }
+      // Otherwise, the useEffect above will redirect to the role-based dashboard.
     } catch (err) {
       console.error('[HcmsLogin] error:', err);
       setError('Network error. Please check that the server is running.');

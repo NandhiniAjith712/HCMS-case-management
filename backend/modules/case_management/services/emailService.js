@@ -2870,6 +2870,112 @@ ${includeTicketLink ? `View ticket history: ${ticketLink}\n\n` : ''}ITSM Support
     }
   }
 
+  // Send SLA warning notification
+  async sendSLAWarningNotification(recipientEmail, recipientName, { ticketId, ticketTitle, timerType, elapsedMinutes, departmentName }, appUrl) {
+    try {
+      if (!this.transporter) {
+        console.warn('⚠️ Email transporter not initialized, skipping SLA warning notification');
+        return { success: false, error: 'Email not configured' };
+      }
+      const { fromName, fromAddress } = this._getSmtpConfig();
+      const subject = `⚠️ SLA Warning: ${ticketTitle || 'Support Request'} #${ticketId}`;
+      const ticketLink = `${appUrl}/tickets/${ticketId}`;
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+        <body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;background:#f4f4f4">
+          <div style="background:white;padding:30px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1)">
+            <div style="text-align:center;padding-bottom:20px;border-bottom:2px solid #e2e8f0;margin-bottom:30px">
+              <div style="font-size:24px;font-weight:bold;color:#f59e0b;margin-bottom:10px">⚠️ SLA Warning</div>
+              <h1>Service Level Alert</h1>
+            </div>
+            <p>Hi <strong>${recipientName || 'Team Member'}</strong>,</p>
+            <p>The SLA timer for <strong>${timerType}</strong> on ticket <strong>#${ticketId}</strong> is approaching the warning threshold.</p>
+            <div style="background:#fef3c7;padding:20px;border-radius:8px;margin:20px 0;border-left:4px solid #f59e0b">
+              <p><strong>Ticket:</strong> ${ticketTitle || 'Support Request'}</p>
+              <p><strong>Department:</strong> ${departmentName || 'N/A'}</p>
+              <p><strong>Timer Type:</strong> ${timerType}</p>
+              <p><strong>Elapsed Time:</strong> ${elapsedMinutes} minutes</p>
+            </div>
+            <p>Please respond to this ticket soon to avoid SLA breach.</p>
+            <p style="margin-top:30px">
+              <a href="${ticketLink}" style="display:inline-block;padding:12px 24px;background:#0F172A;color:white;text-decoration:none;border-radius:6px;font-weight:600">View Ticket</a>
+            </p>
+            <p style="margin-top:30px;color:#6b7280;font-size:14px">This is an automated SLA warning notification.</p>
+          </div>
+        </body>
+        </html>
+      `;
+      const textContent = `Hi ${recipientName || 'Team Member'},\n\nSLA Warning: The ${timerType} timer for ticket #${ticketId} (${ticketTitle}) has reached ${elapsedMinutes} minutes.\n\nDepartment: ${departmentName || 'N/A'}\n\nPlease respond soon to avoid SLA breach.\n\nView ticket: ${ticketLink}\n\nITSM Support Team`;
+      const result = await this.transporter.sendMail({
+        from: `"${fromName}" <${fromAddress}>`,
+        to: recipientEmail,
+        subject,
+        text: textContent,
+        html: htmlContent
+      });
+      console.log(`✅ SLA warning email sent to ${recipientEmail} for ticket #${ticketId}`);
+      return { success: true, messageId: result.messageId };
+    } catch (error) {
+      console.error('❌ Error sending SLA warning email:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Send SLA breach escalation notification
+  async sendSLABreachEscalationNotification(recipientEmail, recipientName, { ticketId, ticketTitle, timerType, departmentName }, appUrl) {
+    try {
+      if (!this.transporter) {
+        console.warn('⚠️ Email transporter not initialized, skipping SLA breach notification');
+        return { success: false, error: 'Email not configured' };
+      }
+      const { fromName, fromAddress } = this._getSmtpConfig();
+      const subject = `🚨 SLA Breach Escalation: ${ticketTitle || 'Support Request'} #${ticketId}`;
+      const ticketLink = `${appUrl}/tickets/${ticketId}`;
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+        <body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;background:#f4f4f4">
+          <div style="background:white;padding:30px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1)">
+            <div style="text-align:center;padding-bottom:20px;border-bottom:2px solid #e2e8f0;margin-bottom:30px">
+              <div style="font-size:24px;font-weight:bold;color:#ef4444;margin-bottom:10px">🚨 SLA Breach</div>
+              <h1>Escalation Required</h1>
+            </div>
+            <p>Hi <strong>${recipientName || 'Department Head'}</strong>,</p>
+            <p>The SLA timer for <strong>${timerType}</strong> on ticket <strong>#${ticketId}</strong> has exceeded the breach threshold. The ticket has been escalated to you.</p>
+            <div style="background:#fef2f2;padding:20px;border-radius:8px;margin:20px 0;border-left:4px solid #ef4444">
+              <p><strong>Ticket:</strong> ${ticketTitle || 'Support Request'}</p>
+              <p><strong>Department:</strong> ${departmentName || 'N/A'}</p>
+              <p><strong>Timer Type:</strong> ${timerType}</p>
+              <p><strong>Status:</strong> Escalated to Department Head</p>
+            </div>
+            <p>Please review and take appropriate action on this ticket.</p>
+            <p style="margin-top:30px">
+              <a href="${ticketLink}" style="display:inline-block;padding:12px 24px;background:#dc2626;color:white;text-decoration:none;border-radius:6px;font-weight:600">View Escalated Ticket</a>
+            </p>
+            <p style="margin-top:30px;color:#6b7280;font-size:14px">This is an automated SLA breach escalation notification.</p>
+          </div>
+        </body>
+        </html>
+      `;
+      const textContent = `Hi ${recipientName || 'Department Head'},\n\nSLA Breach Escalation: The ${timerType} timer for ticket #${ticketId} (${ticketTitle}) has exceeded the breach threshold.\n\nDepartment: ${departmentName || 'N/A'}\nStatus: Escalated to Department Head\n\nPlease review and take action.\n\nView ticket: ${ticketLink}\n\nITSM Support Team`;
+      const result = await this.transporter.sendMail({
+        from: `"${fromName}" <${fromAddress}>`,
+        to: recipientEmail,
+        subject,
+        text: textContent,
+        html: htmlContent
+      });
+      console.log(`✅ SLA breach escalation email sent to ${recipientEmail} for ticket #${ticketId}`);
+      return { success: true, messageId: result.messageId };
+    } catch (error) {
+      console.error('❌ Error sending SLA breach email:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
   // Send polite rejection email to customer when sending from personal email domain
   async sendPersonalDomainRejection(customerEmail, customerName) {
     try {

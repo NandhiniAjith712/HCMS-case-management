@@ -18,6 +18,11 @@ function extractToken(req) {
  * Re-validates the user against the DB so disabled/deleted accounts are rejected.
  */
 async function authenticate(req, res, next) {
+  // Skip authentication for OPTIONS requests (CORS preflight)
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+
   try {
     const token = extractToken(req);
     if (!token) {

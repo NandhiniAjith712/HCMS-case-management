@@ -10,7 +10,7 @@ const http = require('http');
 
 const path = require('path');
 
-require('dotenv').config({ path: path.resolve(__dirname, 'modules/shared/config/config.env') });
+require('dotenv').config({ path: path.resolve(__dirname, 'config.env') });
 
 // Global error handlers to catch crashes
 process.on('uncaughtException', (err) => {
@@ -32,8 +32,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Import database and routes
 
-// Database connection disabled - server will run without database
-// const { testConnection, initializeDatabase } = require('./modules/shared/database/database');
+const { testConnection, initializeDatabase } = require('./modules/shared/database/database');
 
 const ticketsRouter = require('./modules/case_management/routes/tickets');
 
@@ -53,7 +52,15 @@ const authRouter = require('./modules/case_management/routes/auth');
 // HCMS clean auth module (JWT login + get-current-user, roles: employee/hr/admin/department_head)
 const hcmsAuthRouter = require('./modules/auth');
 
+// HCMS case management v2 routes
+const hcmsCasesRouter = require('./modules/case_management/routes/v2/cases');
+const hcmsEscalationLevelsRouter = require('./modules/case_management/routes/v2/escalation-levels');
+const hcmsCaseAccessConfigRouter = require('./modules/case_management/routes/v2/case-access-config');
+const hcmsAiRouter = require('./modules/case_management/routes/v2/ai'); // HCMS employee AI assistant
+
 const slaRouter = require('./modules/case_management/routes/management/sla');
+
+const { startSLAMonitoring } = require('./modules/case_management/services/scheduled-sla-monitoring');
 
 const agentsRouter = require('./modules/case_management/routes/agents');
 
@@ -76,6 +83,18 @@ const settingsRouter = require('./modules/case_management/routes/settings');
 const notificationsRouter = require('./modules/case_management/routes/notifications');
 
 const departmentsRouter = require('./modules/case_management/routes/departments');
+
+// Admin UI routes for System Admin functionality
+const adminDashboardRouter = require('./modules/case_management/routes/admin-dashboard');
+const adminDepartmentsRouter = require('./modules/case_management/routes/admin-departments');
+const adminRoutingRulesRouter = require('./modules/case_management/routes/admin-routing-rules');
+const adminUsersRouter = require('./modules/case_management/routes/admin-users');
+const adminRolesRouter = require('./modules/case_management/routes/admin-roles');
+const adminPermissionsRouter = require('./modules/case_management/routes/admin-permissions');
+const adminActivityRouter = require('./modules/case_management/routes/admin-activity');
+const adminTenantConfigRouter = require('./modules/case_management/routes/admin-tenant-config');
+const departmentHeadRouter = require('./modules/case_management/routes/department-head');
+const adminTicketsRouter = require('./modules/case_management/routes/admin-tickets');
 
 
 
@@ -107,7 +126,7 @@ const server = http.createServer(app);
 
 app.set('trust proxy', 1); // <-- Add this line
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5100;
 
 
 
@@ -295,7 +314,7 @@ const { setTenantContext } = require('./modules/shared/middleware/tenant');
 
 // Skip tenant for paths that don't need it (reduces DB load and log spam)
 
-const skipTenantPaths = ['/health', '/uploads', '/api/auth/business-dashboard', '/api/ai/health', '/api/feedback/public', '/api/v2/auth'];
+const skipTenantPaths = ['/health', '/uploads', '/api/auth/business-dashboard', '/api/ai/health', '/api/feedback/public', '/api/v2/auth', '/api/v2', '/api/notifications', '/api/admin', '/api/departments'];
 
 app.use((req, res, next) => {
 
@@ -317,6 +336,12 @@ app.use('/api/auth', authRouter);
 
 // HCMS clean auth (separate from legacy auth above): POST /api/v2/auth/login, GET /api/v2/auth/me
 app.use('/api/v2/auth', hcmsAuthRouter.routes);
+
+// HCMS case management v2
+app.use('/api/v2/cases', hcmsCasesRouter);
+app.use('/api/v2/escalation-levels', hcmsEscalationLevelsRouter);
+app.use('/api/v2/case-access-config', hcmsCaseAccessConfigRouter);
+app.use('/api/v2/ai', hcmsAiRouter); // HCMS employee AI assistant
 
 app.use('/api/tenants', tenantsRouter); // Tenant management (before other routes)
 
@@ -361,9 +386,27 @@ app.use('/api/settings', settingsRouter);
 
 app.use('/api/notifications', notificationsRouter);
 
+app.use('/api/dashboard/counts', require('./modules/case_management/routes/dashboard-counts'));
+
 // Tenant SPOC module archived - moved to legacy/routes/tenantSpoc.js
 // app.use('/api/tenant-spoc', tenantSpocRouter);
 app.use('/api/departments', departmentsRouter);
+
+// Admin UI routes
+app.use('/api/admin/dashboard', adminDashboardRouter);
+app.use('/api/admin/departments', adminDepartmentsRouter);
+app.use('/api/admin/routing', adminRoutingRulesRouter);
+app.use('/api/admin/users', adminUsersRouter);
+app.use('/api/admin/roles', adminRolesRouter);
+app.use('/api/admin/permissions', adminPermissionsRouter);
+app.use('/api/admin/activity', adminActivityRouter);
+app.use('/api/admin/tenant-config', adminTenantConfigRouter);
+
+// Department Head routes
+app.use('/api/admin', departmentHeadRouter);
+
+// System Admin escalated tickets route
+app.use('/api/admin', adminTicketsRouter);
 
 // Product SPOC module archived - moved to legacy/routes/productSpoc.js
 // app.use('/api/product-spoc', require('./legacy/routes/productSpoc'));
@@ -492,9 +535,12 @@ const startServer = async () => {
 
   try {
 
-    // Database connection disabled - server will run without database
-    // await testConnection();
-    // await initializeDatabase();
+    console.log('🔌 Connecting to database...');
+    await testConnection();
+    console.log('✅ Database connection successful');
+    console.log('🏗️  Initializing database schema...');
+    await initializeDatabase();
+    console.log('✅ Database schema initialized');
 
     // Initialize WebSocket server and store for routes
 
@@ -502,7 +548,8 @@ const startServer = async () => {
 
     wsInstanceStore.set(wsServer);
 
-
+    // Start SLA monitoring service
+    startSLAMonitoring();
 
     // Start server
 
@@ -547,6 +594,10 @@ const startServer = async () => {
       console.log(`   - PUT    /api/chat/session/leave - Leave chat session`);
 
       console.log(`   - GET    /api/chat/unread/:ticketId/:userType - Get unread count`);
+
+      console.log(`   - GET    /api/v2/cases - Get all cases (HCMS v2)`);
+      console.log(`   - POST   /api/v2/cases - Create new case (HCMS v2)`);
+      console.log(`   - GET    /api/v2/cases/:id - Get single case (HCMS v2)`);
 
     });
 

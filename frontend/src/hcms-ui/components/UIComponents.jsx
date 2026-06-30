@@ -1,36 +1,44 @@
 import React from 'react';
+import { AlertCircle, Clock, CheckCircle2, Lock, ArrowUp, Circle, MinusCircle, X } from 'lucide-react';
 
 /**
  * Status Badge Component
- * Displays case status with color-coded badge
+ * Displays case status with premium pill styling matching reference exactly
  */
 export function StatusBadge({ status }) {
   const statusConfig = {
-    open: { label: 'Open', color: '#3b82f6', bg: '#dbeafe', icon: '📋' },
-    in_progress: { label: 'In Progress', color: '#8b5cf6', bg: '#ede9fe', icon: '🔄' },
-    resolved: { label: 'Resolved', color: '#10b981', bg: '#d1fae5', icon: '✅' },
-    closed: { label: 'Closed', color: '#6b7280', bg: '#f3f4f6', icon: '🔒' },
-    escalated: { label: 'Escalated', color: '#f97316', bg: '#ffedd5', icon: '⬆️' },
+    open: { label: 'Open', color: '#EA580C', bg: '#FFF1F2', border: '1px solid #FECACA', icon: AlertCircle },
+    new: { label: 'Open', color: '#EA580C', bg: '#FFF1F2', border: '1px solid #FECACA', icon: AlertCircle },
+    in_progress: { label: 'In Progress', color: '#CA8A04', bg: '#FFFBEB', border: '1px solid #FDE68A', icon: Clock },
+    resolved: { label: 'Resolved', color: '#2563EB', bg: '#EFF6FF', border: '1px solid #BFDBFE', icon: CheckCircle2 },
+    closed: { label: 'Closed', color: '#059669', bg: '#ECFDF5', border: '1px solid #A7F3D0', icon: CheckCircle2 },
+    escalated: { label: 'Escalated', color: '#F97316', bg: '#FFF7ED', border: '1px solid #FDBA74', icon: ArrowUp },
+    waiting: { label: 'Waiting', color: '#2563EB', bg: '#EFF6FF', border: '1px solid #BFDBFE', icon: Clock },
+    rejected: { label: 'Rejected', color: '#DC2626', bg: '#FEF2F2', border: '1px solid #FECACA', icon: X },
   };
 
-  const config = statusConfig[status] || { label: status, color: '#6b7280', bg: '#f3f4f6', icon: '📌' };
+  const config = statusConfig[status] || { label: status, color: '#64748B', bg: '#F1F5F9', border: '1px solid #E2E8F0', icon: MinusCircle };
+  const Icon = config.icon;
 
   return (
     <span
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 4,
-        padding: '4px 10px',
-        borderRadius: 12,
-        fontSize: 12,
-        fontWeight: 600,
+        gap: 6,
+        height: 32,
+        padding: '0 16px',
+        borderRadius: 999,
+        fontSize: 15,
+        fontWeight: 500,
         background: config.bg,
         color: config.color,
-        border: `1px solid ${config.color}30`
+        border: config.border,
       }}
     >
-      <span>{config.icon}</span>
+      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon size={14} strokeWidth={2.5} />
+      </span>
       <span>{config.label}</span>
     </span>
   );
@@ -38,52 +46,37 @@ export function StatusBadge({ status }) {
 
 /**
  * Priority Badge Component
- * Displays case priority with color-coded badge and indicator
+ * Displays case priority with premium pill styling
  */
 export function PriorityBadge({ priority }) {
   const priorityConfig = {
-    low: { label: 'Low', color: '#10b981', bg: '#d1fae5', icon: '🟢', level: 1 },
-    medium: { label: 'Medium', color: '#f59e0b', bg: '#fef3c7', icon: '🟡', level: 2 },
-    high: { label: 'High', color: '#f97316', bg: '#ffedd5', icon: '🟠', level: 3 },
-    critical: { label: 'Critical', color: '#ef4444', bg: '#fee2e2', icon: '🔴', level: 4 },
+    low: { label: 'Low', color: '#22C55E', bg: '#F0FDF4', icon: Circle },
+    medium: { label: 'Medium', color: '#F59E0B', bg: '#FEFCE8', icon: Circle },
+    high: { label: 'High', color: '#F97316', bg: '#FFF7ED', icon: Circle },
+    critical: { label: 'Critical', color: '#EF4444', bg: '#FEF2F2', icon: Circle },
   };
 
-  const config = priorityConfig[priority] || { label: priority, color: '#6b7280', bg: '#f3f4f6', icon: '⚪', level: 0 };
+  const config = priorityConfig[priority] || { label: priority, color: '#64748B', bg: '#F1F5F9', icon: Circle };
+  const Icon = config.icon;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 4,
-          padding: '4px 10px',
-          borderRadius: 12,
-          fontSize: 12,
-          fontWeight: 600,
-          background: config.bg,
-          color: config.color,
-          border: `1px solid ${config.color}30`
-        }}
-      >
-        <span>{config.icon}</span>
-        <span>{config.label}</span>
-      </span>
-      {/* Priority level indicator dots */}
-      <div style={{ display: 'flex', gap: 2 }}>
-        {[1, 2, 3, 4].map(level => (
-          <div
-            key={level}
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: level <= config.level ? config.color : '#e5e7eb'
-            }}
-          />
-        ))}
-      </div>
-    </div>
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        height: 32,
+        padding: '0 16px',
+        borderRadius: 999,
+        fontSize: 14,
+        fontWeight: 500,
+        background: config.bg,
+        color: config.color,
+      }}
+    >
+      <Icon size={14} />
+      <span>{config.label}</span>
+    </span>
   );
 }
 

@@ -2504,6 +2504,8 @@ const TicketDetailPage = ({ user: propUser, accessScope = null }) => {
 
   const myAssignment =
     (taskData?.tasks || []).find((t) => t && Number(t.assigned_agent_id) === myAgentId) || null;
+  const isAssignedToMe =
+    Number(user?.id) === Number(ticket?.assigned_to) || Boolean(myAssignment);
   const myAssignStatus = (myAssignment?.assignment_status || 'new').toLowerCase();
   const myWorkStatus = (myAssignment?.status || 'pending').toLowerCase();
   const groupedAgentSlice = hasGroupedTasks && isAgent && !isManager && myAssignment;
@@ -2986,7 +2988,7 @@ const TicketDetailPage = ({ user: propUser, accessScope = null }) => {
         </section>
 
         <section className="td-section td-section--actions">
-          {!isCeo && (isManager ? (
+          {!isCeo && (isManager || isAssignedToMe) && (isManager ? (
             <div className="td-actions-card">
               <div className="td-actions-card-head">
                 <div className="td-actions-card-titles">

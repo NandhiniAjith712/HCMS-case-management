@@ -12,23 +12,32 @@ const api = axios.create({
   }
 });
 
-// Add auth token and tenant ID to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('hcmsToken') || sessionStorage.getItem('hcmsToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Separate axios instance for non-v2 endpoints (e.g. /api/notifications)
+const rootApi = axios.create({
+  baseURL: '',
+  headers: {
+    'Content-Type': 'application/json'
   }
-  // Add tenant ID from user storage or default
-  const user = JSON.parse(localStorage.getItem('hcmsUser') || sessionStorage.getItem('hcmsUser') || '{}');
-  if (user?.tenant_id) {
-    config.headers['X-Tenant-ID'] = user.tenant_id;
-  } else if (user?.organization_id) {
-    config.headers['X-Tenant-ID'] = user.organization_id;
-  } else {
-    config.headers['X-Tenant-ID'] = 'default';
-  }
-  return config;
 });
+
+// Shared request interceptor for auth token and tenant ID
+function applyAuthInterceptor(instance) {
+  instance.interceptors.request.use((config) => {
+    const token = sessionStorage.getItem('hcmsToken') || localStorage.getItem('hcmsToken') || sessionStorage.getItem('token') || localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    const user = JSON.parse(sessionStorage.getItem('hcmsUser') || localStorage.getItem('hcmsUser') || sessionStorage.getItem('user') || localStorage.getItem('user') || '{}');
+    const tenantId = user?.tenant_id || user?.tenantId || user?.organization_id;
+    if (tenantId && tenantId !== 'default') {
+      config.headers['X-Tenant-ID'] = tenantId;
+    }
+    return config;
+  });
+}
+
+applyAuthInterceptor(api);
+applyAuthInterceptor(rootApi);
 
 // Handle 401 responses
 api.interceptors.response.use(
@@ -36,8 +45,12 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Clear auth storage and redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       localStorage.removeItem('hcmsToken');
       localStorage.removeItem('hcmsUser');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
       sessionStorage.removeItem('hcmsToken');
       sessionStorage.removeItem('hcmsUser');
       window.location.href = '/hcms/login';
@@ -45,6 +58,14 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+/**
+ * Get dashboard metrics and recent tickets
+ */
+export async function getDashboardData() {
+  const response = await api.get('/cases/dashboard');
+  return response.data;
+}
 
 /**
  * Get all cases for the current user
@@ -117,6 +138,22 @@ export async function getCaseComments(caseId) {
 }
 
 /**
+ * Get internal messages (visible only to HR and department heads)
+ */
+export async function getInternalMessages(caseId) {
+  const response = await api.get(`/cases/${caseId}/internal-messages`);
+  return response.data;
+}
+
+/**
+ * Add an internal note to a case (visible to HR, department heads, and system admins)
+ */
+export async function addCaseNote(caseId, text) {
+  const response = await api.post(`/cases/${caseId}/notes`, { text });
+  return response.data;
+}
+
+/**
  * Update case status
  */
 export async function updateCaseStatus(caseId, status, reason = '') {
@@ -125,10 +162,171 @@ export async function updateCaseStatus(caseId, status, reason = '') {
 }
 
 /**
- * Escalate a case
+ * Escalate a case using the sequential L1-L5 escalation engine
  */
-export async function escalateCase(caseId, escalationData) {
+export async function escalateCase(caseId, escalationData = {}) {
   const response = await api.post(`/cases/${caseId}/escalate`, escalationData);
+  return response.data;
+}
+
+/**
+ * Request more information from the employee
+ */
+export async function requestInfo(caseId, message) {
+  const response = await api.post(`/cases/${caseId}/request-info`, { message });
+  return response.data;
+}
+
+/**
+ * Get escalation history for a case
+ */
+export async function getEscalationHistory(caseId) {
+  const response = await api.get(`/cases/${caseId}/escalation-history`);
+  return response.data;
+}
+
+/**
+ * Respond to an escalation consent request
+ */
+export async function respondToEscalationConsent(caseId, requestId, responseData) {
+  const response = await api.post(`/cases/${caseId}/escalation-consent/${requestId}/respond`, responseData);
+  return response.data;
+}
+
+/**
+ * Acknowledge an escalation consent response (handler/HR confirms before actual escalation)
+ */
+export async function acknowledgeEscalationConsent(caseId, requestId) {
+  const response = await api.post(`/cases/${caseId}/escalation-consent/${requestId}/acknowledge`);
+  return response.data;
+}
+
+/**
+ * Get pending escalation consent requests for the current employee
+ */
+export async function getPendingEscalationConsents() {
+  const response = await api.get('/cases/escalation-consent/pending');
+  return response.data;
+}
+
+/**
+ * Get notifications
+ */
+export async function getNotifications(params = {}) {
+  const response = await rootApi.get('/api/notifications', { params });
+  return response.data;
+}
+
+/**
+ * Mark notification as read
+ */
+export async function markNotificationAsRead(notificationId) {
+  const response = await rootApi.patch(`/api/notifications/${notificationId}/read`);
+  return response.data;
+}
+
+/**
+ * Mark all notifications as read
+ */
+export async function markAllNotificationsAsRead() {
+  const response = await rootApi.patch('/api/notifications/mark-all-read');
+  return response.data;
+}
+
+/**
+ * Backfill historical HR notifications
+ */
+export async function backfillHRNotifications() {
+  const response = await rootApi.post('/api/notifications/backfill-hr');
+  return response.data;
+}
+
+/**
+ * Backfill historical Department Head / System Admin notifications
+ */
+export async function backfillManagerNotifications() {
+  const response = await rootApi.post('/api/notifications/backfill-managers');
+  return response.data;
+}
+
+/**
+ * Change password
+ */
+export async function changePassword(passwordData) {
+  const response = await api.post('/auth/change-password', passwordData);
+  return response.data;
+}
+
+/**
+ * Get current user profile
+ */
+export async function getCurrentUser() {
+  const response = await api.get('/auth/me');
+  return response.data;
+}
+
+/**
+ * Close a ticket as employee with satisfaction check
+ */
+export async function closeTicketAsEmployee(caseId, satisfied, satisfactionRating) {
+  const response = await api.post(`/cases/${caseId}/close`, {
+    satisfied,
+    satisfaction_rating: satisfactionRating
+  });
+  return response.data;
+}
+
+/**
+ * Reopen a ticket as employee
+ */
+export async function reopenTicket(caseId, reason) {
+  const response = await api.post(`/cases/${caseId}/reopen`, { reason });
+  return response.data;
+}
+
+/**
+ * Upload attachments to a case
+ */
+export async function uploadAttachments(caseId, files, messageId = null) {
+  const formData = new FormData();
+  files.forEach(file => {
+    formData.append('files', file);
+  });
+  if (messageId) {
+    formData.append('message_id', messageId);
+  }
+
+  const response = await api.post(`/cases/${caseId}/attachments`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+}
+
+/**
+ * Download an attachment
+ */
+export async function downloadAttachment(caseId, attachmentId) {
+  const response = await api.get(`/cases/${caseId}/attachments/${attachmentId}/download`, {
+    responseType: 'blob'
+  });
+  return response;
+}
+
+/**
+ * Get HR users for reassignment
+ */
+export async function getHRUsers() {
+  const response = await api.get('/cases/users/hr');
+  return response.data;
+}
+
+/**
+ * Get SLA timers for a case
+ */
+export async function getCaseSLA(caseId) {
+  const response = await api.get(`/cases/${caseId}/sla`);
   return response.data;
 }
 

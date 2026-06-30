@@ -10,7 +10,7 @@ router.get('/', authenticateToken, verifyTenantAccess, async (req, res) => {
   try {
     const tenantId = req.tenantId;
     const [departments] = await pool.execute(
-      'SELECT id, name, status FROM departments WHERE tenant_id = ? AND status = "active" ORDER BY name ASC',
+      'SELECT id, name, status FROM departments WHERE (tenant_id = ? OR tenant_id IS NULL) AND status = "active" ORDER BY name ASC',
       [tenantId]
     );
     res.json({
@@ -79,6 +79,36 @@ router.get('/manager-permissions/:managerId', authenticateToken, verifyTenantAcc
       success: false,
       message: 'Failed to fetch manager department permissions'
     });
+  }
+});
+
+// GET /api/departments/:id - Get department details including subcategories
+router.get('/:id', authenticateToken, verifyTenantAccess, async (req, res) => {
+  try {
+    const tenantId = req.tenantId;
+    const { id } = req.params;
+
+    const [departments] = await pool.execute(
+      'SELECT id, name, description, status, head_id, head_title FROM departments WHERE id = ? AND (tenant_id = ? OR tenant_id IS NULL) AND status = "active"',
+      [id, tenantId]
+    );
+
+    if (departments.length === 0) {
+      return res.status(404).json({ success: false, message: 'Department not found' });
+    }
+
+    const [subcategories] = await pool.execute(
+      'SELECT id, name, description, display_order FROM department_subcategories WHERE department_id = ? AND is_active = 1 ORDER BY display_order, name',
+      [id]
+    );
+
+    res.json({
+      success: true,
+      data: { ...departments[0], subcategories }
+    });
+  } catch (error) {
+    console.error('Error fetching department:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch department' });
   }
 });
 

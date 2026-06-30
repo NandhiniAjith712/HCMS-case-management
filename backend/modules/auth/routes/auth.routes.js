@@ -10,4 +10,7 @@ router.post('/login', authController.login);
 // Protected: return the currently authenticated user.
 router.get('/me', authenticate, authController.getCurrentUser);
 
+// Protected: change password
+router.post('/change-password', authenticate, authController.changePassword);
+
 module.exports = router;

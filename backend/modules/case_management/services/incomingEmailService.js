@@ -43,7 +43,8 @@ function getImapConfig() {
   const host = process.env.IMAP_HOST || process.env.IMAP_SERVER || 'imap.gmail.com';
   const port = parseInt(process.env.IMAP_PORT || '993', 10);
   const secure = port === 993;
-  return { user, pass, host, port, secure };
+  const enabled = process.env.IMAP_INCOMING_ENABLED !== 'false';
+  return { user, pass, host, port, secure, enabled };
 }
 
 /**
@@ -205,6 +206,10 @@ async function findOrCreateUserForEmail(email, name, tenantId) {
 
 async function processInbox() {
   const config = getImapConfig();
+  if (!config.enabled) {
+    console.log('📧 IMAP incoming email processing disabled via IMAP_INCOMING_ENABLED=false');
+    return;
+  }
   if (!config.user || !config.pass) return;
 
   try {
@@ -257,17 +262,17 @@ async function processInbox() {
             }
 
             const ticketId = extractTicketIdFromSubject(subject);
-            
+
             if (ticketId) {
               // Handle REPLY to existing ticket (Automatic)
               const [tickets] = await pool.execute(
-                'SELECT id, tenant_id, assigned_to FROM tickets WHERE id = ? AND tenant_id = ? LIMIT 1',
+                'SELECT id, tenant_id, assigned_to FROM cases WHERE id = ? AND tenant_id = ? LIMIT 1',
                 [ticketId, tenantId]
               );
 
               if (tickets.length > 0) {
                 const cleanText = stripQuotedContent(body) || body.substring(0, 2000);
-                
+
                 await ticketMessagesService.addMessage({
                   ticketId,
                   tenantId,
@@ -282,292 +287,22 @@ async function processInbox() {
                   'INSERT INTO incoming_emails (tenant_id, sender_email, sender_name, subject, body, message_id, received_at, processing_status, linked_ticket_id, email_type) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)',
                   [tenantId, fromEmail, fromName, subject, body, messageId, 'processed', ticketId, 'valid_user_mail']
                 );
+                console.log(`📧 Email reply added to ticket #${ticketId} from ${fromEmail}`);
               } else {
-                // Invalid ticket ID or missing ticket
+                // Invalid ticket ID or missing ticket - ignore
+                console.log(`📧 Email reply to non-existent ticket #${ticketId} from ${fromEmail} - ignored`);
                 await pool.execute(
                   'INSERT INTO incoming_emails (tenant_id, sender_email, sender_name, subject, body, message_id, received_at, processing_status, email_type) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?)',
-                  [tenantId, fromEmail, fromName, subject, body, messageId, 'review_required', 'valid_user_mail']
+                  [tenantId, fromEmail, fromName, subject, body, messageId, 'ignored', 'invalid_ticket']
                 );
               }
             } else {
-              // NEW TICKET REQUEST - Auto-convert or Send to Review Inbox
-              const validation = await validateEmail(parsed, tenantId);
-              
-              let userId = null;
-              // ONLY create a new user record in the users table IF AND ONLY IF the email is valid for this tenant!
-              if (validation.emailType === 'valid_user_mail') {
-                const userRes = await findOrCreateUserForEmail(fromEmail, fromName, tenantId);
-                userId = userRes.userId;
-              } else {
-                // For unregistered custom domains or personal domains, we do NOT create a new user record.
-                // We only link them if the email address already exists in the users table.
-                const [existing] = await pool.execute(
-                  'SELECT id FROM users WHERE LOWER(email) = ? AND (tenant_id = ? OR tenant_id IS NULL) LIMIT 1',
-                  [fromEmail.toLowerCase(), tenantId]
-                );
-                if (existing.length > 0) {
-                  userId = existing[0].id;
-                }
-              }
-              
-              let processingStatus = 'pending_review';
-              if (validation.emailType === 'invalid_domain') {
-                processingStatus = 'ignored';
-              } else if (validation.emailType === 'spam' || validation.emailType === 'auto_reply' || validation.emailType === 'delivery_failure') {
-                processingStatus = 'ignored';
-              }
-
-              // Send Auto-Rejection Email if sending from Personal/Invalid Domain
-              if (validation.emailType === 'invalid_domain') {
-                try {
-                  console.log(`🚫 Personal domain detected for ${fromEmail}. Sending rejection reply.`);
-                  await emailService.sendPersonalDomainRejection(fromEmail, fromName);
-                } catch (rejectErr) {
-                  console.error('❌ Failed to send personal domain rejection email:', rejectErr);
-                }
-              }
-
-              // AI Field Extraction & Similarity Detection
-              let aiExtractedFields = null;
-              let threadId = `t_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-
-              const preCleanedBody = emailCleaner.cleanEmailBody(body);
-
-              let linkedTicketId = null;
-              let isDuplicateOfActive = false;
-              let matchedTicketId = null;
-              let aiConfidenceScore = null;
-              let aiContinuationReason = null;
-
-              if (processingStatus === 'pending_review' || validation.emailType === 'valid_user_mail') {
-                try {
-                  const defaultFields = {
-                    product: 'IT Support',
-                    module: 'General',
-                    issueType: 'Incident',
-                    priority: 'medium',
-                    summary: subject,
-                    clean_description: preCleanedBody.substring(0, 1000)
-                  };
-
-                  // Retrieve allowed products for tenant
-                  const tenantSpocService = require('./organizationService');
-                  let allowedProducts = [];
-                  let allowedModulesMap = {};
-                  allowedProducts = await tenantSpocService.getProductsForTenant(tenantId);
-                  const allowedProductIds = allowedProducts.map(p => p.id);
-                  if (allowedProductIds.length > 0) {
-                    const [modules] = await pool.query(
-                      'SELECT m.name as module_name, p.name as product_name FROM modules m JOIN products p ON m.product_id = p.id WHERE m.status = "active" AND m.product_id IN (?)',
-                      [allowedProductIds]
-                    );
-                    for (const mod of modules) {
-                      if (!allowedModulesMap[mod.product_name]) {
-                        allowedModulesMap[mod.product_name] = [];
-                      }
-                      allowedModulesMap[mod.product_name].push(mod.module_name);
-                    }
-                  }
-
-                  aiExtractedFields = await withTimeout(
-                    aiExtractionService.extractTicketFields(
-                      subject,
-                      preCleanedBody,
-                      allowedProducts.map(p => p.name),
-                      allowedModulesMap
-                    ),
-                    45000,
-                    defaultFields
-                  );
-
-                  // Intelligent Email-to-Ticket Continuation & Duplicate Detection
-                  let candidateTickets = [];
-
-                  const [senderTickets] = await pool.execute(
-                    `SELECT id, issue_title, description, status, created_at, product, module 
-                     FROM tickets 
-                     WHERE email = ? AND status NOT IN ('resolved', 'closed')
-                     ORDER BY created_at DESC LIMIT 5`,
-                    [fromEmail]
-                  );
-
-                  // Merge candidates, de-dupe by id
-                  const candidateMap = new Map();
-                  for (const t of senderTickets) {
-                    candidateMap.set(t.id, t);
-                  }
-                  candidateTickets = Array.from(candidateMap.values());
-
-                  // Fetch last 3 messages for each candidate
-                  for (const candidate of candidateTickets) {
-                    const [messages] = await pool.execute(
-                      `SELECT sender_type as sender_role, message as body FROM ticket_messages 
-                       WHERE ticket_id = ? AND tenant_id = ? 
-                       ORDER BY created_at DESC LIMIT 3`,
-                      [candidate.id, tenantId]
-                    );
-                    candidate.messages = messages.reverse(); // Chronological order
-                  }
-
-                  if (candidateTickets.length > 0) {
-                    console.log(`🤖 Running AI Continuation check against ${candidateTickets.length} active tickets...`);
-                    const cleanLatestMessage = preCleanedBody.substring(0, 1000);
-                    const matchResult = await withTimeout(
-                      aiExtractionService.detectContinuation(
-                        {
-                          subject,
-                          body,
-                          latest_message: cleanLatestMessage,
-                          from_email: fromEmail,
-                          cc: parsed.cc?.value?.map(c => c.address).join(', ') || '',
-                          product: aiExtractedFields?.product || 'Unknown',
-                          module: aiExtractedFields?.module || 'Unknown'
-                        },
-                        candidateTickets
-                      ),
-                      45000,
-                      { decision: 'new', matchedTicketId: null, confidence: 0, reason: 'AI matching timed out.' }
-                    );
-
-                    aiConfidenceScore = matchResult.confidence;
-                    aiContinuationReason = matchResult.reason;
-
-                    if (matchResult.decision === 'continuation') {
-                      matchedTicketId = matchResult.matchedTicketId;
-
-                      if (aiConfidenceScore >= 0.75) {
-                        // HIGH confidence: Automatic merge/append
-                        isDuplicateOfActive = true;
-                        linkedTicketId = matchedTicketId;
-                        processingStatus = 'converted_to_ticket';
-                        console.log(`🔗 HIGH confidence AI Continuation matched to ticket #${matchedTicketId}. Appending reply.`);
-
-                        const cleanText = stripQuotedContent(body) || body.substring(0, 2000);
-                        await ticketMessagesService.addMessage({
-                          ticketId: matchedTicketId,
-                          tenantId,
-                          senderType: 'user',
-                          senderName: fromName,
-                          message: cleanText,
-                          channel: 'email',
-                          externalId: messageId
-                        });
-                      } else if (aiConfidenceScore >= 0.40) {
-                        // MEDIUM confidence: Queue for manager review
-                        processingStatus = 'pending_continuation_review';
-                        console.log(`⚠️ MEDIUM confidence AI Continuation (${aiConfidenceScore}) to ticket #${matchedTicketId}. Sending to review queue.`);
-                      }
-                    }
-                  }
-
-                  // Similarity Check 2: Pending Emails (fallback if not matched to active ticket)
-                  if (!isDuplicateOfActive && processingStatus !== 'pending_continuation_review') {
-                    const [others] = await pool.execute(
-                      'SELECT id, subject, body, thread_id FROM incoming_emails WHERE sender_email = ? AND processing_status = "pending_review" ORDER BY received_at DESC LIMIT 5',
-                      [fromEmail]
-                    );
-
-                    for (const other of others) {
-                      const sim = await withTimeout(
-                        aiExtractionService.detectSimilarity({ subject, body }, other),
-                        4000,
-                        { isSameIssue: false, confidence: 0 }
-                      );
-
-                      if (sim && sim.isSameIssue) {
-                        threadId = other.thread_id || `t_cluster_${other.id}`;
-                        if (!other.thread_id) {
-                          await pool.execute('UPDATE incoming_emails SET thread_id = ? WHERE id = ?', [threadId, other.id]);
-                        }
-                        break;
-                      }
-                    }
-                  }
-                } catch (aiErr) {
-                  console.error('📧 AI Analysis failed for incoming email:', aiErr.message);
-                }
-              }
-
-              // DIRECT TICKET INGESTION FOR VALID TENANT USERS
-              if (!linkedTicketId && validation.emailType === 'valid_user_mail' && userId && processingStatus !== 'ignored' && processingStatus !== 'pending_continuation_review') {
-                try {
-                  console.log(`🚀 Valid tenant user detected for ${fromEmail}. Directly creating ticket.`);
-                  
-                  const product = aiExtractedFields?.product || 'IT Support';
-                  const module = aiExtractedFields?.module || 'General';
-                  const issueType = aiExtractedFields?.issueType || 'Incident';
-                  const priority = aiExtractedFields?.priority || 'medium';
-                  const issueTitle = aiExtractedFields?.summary || subject;
-                  const description = aiExtractedFields?.clean_description || preCleanedBody;
-
-                  const ticketResult = await ticketService.createTicket({
-                    tenantId,
-                    name: fromName,
-                    email: fromEmail,
-                    product,
-                    module,
-                    issueTitle,
-                    description,
-                    issueType,
-                    priority,
-                    userId,
-                    source: 'email'
-                  }, { id: userId, name: fromName, role: 'user' });
-
-                  if (ticketResult && ticketResult.success) {
-                    linkedTicketId = ticketResult.ticketId;
-                    processingStatus = 'converted_to_ticket';
-                    console.log(`✅ Ticket #${linkedTicketId} created successfully for ${fromEmail}`);
-                  }
-                } catch (ticketErr) {
-                  console.error('❌ Direct ticket creation failed, falling back to review queue:', ticketErr);
-                  processingStatus = 'pending_review';
-                }
-              }
-
-              // Send Notification Email to Support Managers if Custom Domain is Unregistered
-              if (validation.emailType === 'unregistered_domain') {
-                try {
-                  console.log(`⚠️ Unregistered custom domain detected for ${fromEmail}. Notifying support managers.`);
-                  const appNotificationService = require('./appNotificationService');
-                  const [managers] = await pool.execute('SELECT id, email, name FROM agents WHERE role = "support_manager" AND is_active = 1');
-                  for (const mgr of managers) {
-                    await emailService.sendUnregisteredDomainNotification(mgr.email, mgr.name, fromEmail, subject, body);
-                    await appNotificationService.notifyManagerStaffInApp(pool, {
-                      tenantId,
-                      managerStaffId: mgr.id,
-                      title: 'Unregistered Domain Alert',
-                      description: `Email from unregistered domain: ${fromEmail}. Subject: ${subject}`,
-                      dedupeKey: `unreg_dom:${messageId}:${mgr.id}`
-                    });
-                  }
-                } catch (notifyErr) {
-                  console.error('❌ Failed to send manager unregistered domain alert:', notifyErr);
-                }
-              }
-
+              // No ticket ID in subject - ignore (HCMS does not create tickets from email)
+              console.log(`📧 Email from ${fromEmail} has no ticket ID in subject - ignored (ticket creation disabled)`);
               await pool.execute(
-                `INSERT INTO incoming_emails (
-                  tenant_id, sender_email, sender_name, subject, body, 
-                  message_id, received_at, processing_status, email_type, 
-                  existing_user_id, validation_result, ai_extracted_fields, thread_id, 
-                  linked_ticket_id, matched_ticket_id, ai_confidence_score, ai_continuation_reason
-                ) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                  tenantId, fromEmail, fromName, subject, body, 
-                  messageId, processingStatus, validation.emailType, 
-                  userId, JSON.stringify(validation), 
-                  aiExtractedFields ? JSON.stringify(aiExtractedFields) : null,
-                  threadId, linkedTicketId, matchedTicketId || null,
-                  aiConfidenceScore || null, aiContinuationReason || null
-                ]
+                'INSERT INTO incoming_emails (tenant_id, sender_email, sender_name, subject, body, message_id, received_at, processing_status, email_type) VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?)',
+                [tenantId, fromEmail, fromName, subject, body, messageId, 'ignored', 'no_ticket_id']
               );
-
-              if (processingStatus === 'pending_review') {
-                console.log(`📧 New email from ${fromEmail} added to Manager Review Inbox`);
-              } else if (processingStatus === 'pending_continuation_review') {
-                console.log(`📧 Potential duplicate/continuation email from ${fromEmail} added to Continuation Queue`);
-              }
             }
 
             await imapClient.messageFlagsAdd({ uid }, ['\\Seen'], { uid: true });

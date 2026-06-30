@@ -81,34 +81,13 @@ router.get('/test-auth', async (req, res) => {
 // Get all products with SLA settings
 router.get('/products', authenticateToken, verifyTenantAccess, async (req, res) => {
   try {
-    // Get tenant_id from request context, user, or default
-    let tenantId = req.tenantId;
-
-    // If no tenant in request context, try to get from user
-    if (!tenantId && req.user && req.user.tenant_id) {
-      tenantId = req.user.tenant_id;
-      console.log(`🏢 Using tenant_id from user: ${tenantId}`);
-    }
-
-    // If still no tenant, use default tenant in development
-    if (!tenantId && process.env.NODE_ENV === 'development') {
-      try {
-        const [tenants] = await pool.execute(
-          'SELECT id FROM tenants WHERE subdomain = \'default\' AND status = \'active\' LIMIT 1'
-        );
-        if (tenants.length > 0) {
-          tenantId = tenants[0].id;
-          console.log(`🏢 Using default tenant_id: ${tenantId}`);
-        } else {
-          // Fallback to tenant_id = 1
-          tenantId = 1;
-          console.log(`🏢 Using fallback tenant_id: ${tenantId}`);
-        }
-      } catch (error) {
-        tenantId = 1;
-        console.log(`🏢 Error getting default tenant, using tenant_id: ${tenantId}`);
-      }
-    }
+    console.log('🔍 GET /api/sla/products called');
+    console.log('   req.user:', req.user);
+    console.log('   req.tenantId:', req.tenantId);
+    
+    // Use tenant_id from request or default to 1 for HCMS
+    const tenantId = req.tenantId || 1;
+    console.log('   Using tenantId:', tenantId);
 
     let query = `
       SELECT p.*, u.name as created_by_name
@@ -719,7 +698,14 @@ router.get('/modules/:moduleId/configurations', authenticateToken, verifyTenantA
 // Get all modules
 router.get('/modules', authenticateToken, verifyTenantAccess, async (req, res) => {
   try {
-    const tenantId = req.tenantId;
+    console.log('🔍 GET /api/sla/modules called');
+    console.log('   req.user:', req.user);
+    console.log('   req.tenantId:', req.tenantId);
+    
+    // Use tenant_id from request or default to 1 for HCMS
+    const tenantId = req.tenantId || 1;
+    console.log('   Using tenantId:', tenantId);
+    
     const [modules] = await pool.execute(`
       SELECT m.*, p.name as product_name 
       FROM modules m 
@@ -898,34 +884,29 @@ router.delete('/modules/:id', authenticateToken, verifyTenantAccess, async (req,
 // Get all SLA configurations
 router.get('/configurations', authenticateToken, verifyTenantAccess, async (req, res) => {
   try {
-    const tenantId = req.tenantId;
-    const productId = req.query.product_id ? Number(req.query.product_id) : null;
-    const moduleId = req.query.module_id ? Number(req.query.module_id) : null;
-    let where = 'WHERE sc.tenant_id = ?';
-    const params = [tenantId];
-    if (Number.isFinite(productId)) {
-      where += ' AND sc.product_id = ?';
-      params.push(productId);
-    }
-    if (Number.isFinite(moduleId)) {
-      where += ' AND sc.module_id = ?';
-      params.push(moduleId);
+    console.log('🔍 GET /api/sla/configurations called');
+    console.log('   req.user:', req.user);
+    console.log('   req.tenantId:', req.tenantId);
+    
+    // Use tenant_id from request or default to 1 for HCMS
+    const tenantId = req.tenantId || 1;
+    console.log('   Using tenantId:', tenantId);
+    
+    const departmentId = req.query.department_id ? Number(req.query.department_id) : null;
+    let where = 'WHERE sc.department_id IS NOT NULL';
+    const params = [];
+    if (Number.isFinite(departmentId)) {
+      where += ' AND sc.department_id = ?';
+      params.push(departmentId);
     }
     const [configurations] = await pool.execute(`
-      SELECT sc.*, p.name as product_name, m.name as module_name, u.name as created_by_name,
-             CASE
-               WHEN sc.product_id IS NOT NULL AND sc.module_id IS NOT NULL AND sc.issue_type_id IS NOT NULL THEN 'EXACT'
-               WHEN sc.product_id IS NOT NULL AND sc.module_id IS NULL AND sc.issue_type_id IS NOT NULL THEN 'PRODUCT_ISSUE'
-               WHEN sc.product_id IS NOT NULL AND sc.module_id IS NOT NULL AND sc.issue_type_id IS NULL THEN 'PRODUCT_MODULE'
-               WHEN sc.product_id IS NOT NULL AND sc.module_id IS NULL AND sc.issue_type_id IS NULL THEN 'PRODUCT_DEFAULT'
-               ELSE 'TENANT_DEFAULT'
-             END AS scope_type
+      SELECT sc.*, d.name as department_name, u.name as created_by_name, ds.name as subcategory_name
       FROM sla_configurations sc
-      LEFT JOIN products p ON sc.product_id = p.id AND p.tenant_id = sc.tenant_id
-      LEFT JOIN modules m ON sc.module_id = m.id AND m.tenant_id = sc.tenant_id
-      LEFT JOIN users u ON sc.created_by = u.id AND u.tenant_id = sc.tenant_id
+      LEFT JOIN departments d ON sc.department_id = d.id
+      LEFT JOIN users u ON sc.created_by = u.id
+      LEFT JOIN department_subcategories ds ON sc.subcategory_id = ds.id
       ${where}
-      ORDER BY scope_type, p.name, m.name, sc.issue_name
+      ORDER BY d.name, sc.priority_level
     `, params);
     
     res.json({
@@ -1166,47 +1147,43 @@ router.get('/products/:productId/configurations', authenticateToken, verifyTenan
 // Create new SLA configuration
 router.post('/configurations', authenticateToken, verifyTenantAccess, async (req, res) => {
   try {
-    const tenantId = req.tenantId;
-    const { product_id, module_id, issue_type_id, issue_name, issue_description, response_time_minutes, resolution_time_minutes, is_active = true } = req.body;
+    const tenantId = req.tenantId || 1;
+    const { department_id, subcategory_id, priority_level, response_time_minutes, resolution_time_minutes, escalation_warning_threshold_minutes, escalation_breach_threshold_minutes, escalation_level = 'department_head', is_active = true } = req.body;
     const createdBy = getCreatedBy(req.user);
 
-    const productId = product_id === '' || product_id === undefined ? null : Number(product_id);
-    const moduleId = module_id === '' || module_id === undefined ? null : Number(module_id);
-    const issueTypeId = normalizeIssueTypeId(issue_type_id || issue_name);
-
+    if (!department_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Department is required'
+      });
+    }
     if (!response_time_minutes || !resolution_time_minutes) {
       return res.status(400).json({
         success: false,
         message: 'Response Time and Resolution Time are required'
       });
     }
-    if (productId !== null) {
-      const [products] = await pool.execute('SELECT id FROM products WHERE id = ? AND tenant_id = ?', [productId, tenantId]);
-      if (!products.length) return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-    if (moduleId !== null) {
-      const [modules] = await pool.execute('SELECT id FROM modules WHERE id = ? AND tenant_id = ?', [moduleId, tenantId]);
-      if (!modules.length) return res.status(404).json({ success: false, message: 'Module not found' });
-    }
 
+    // Check if department exists
+    const [departments] = await pool.execute('SELECT id, name FROM departments WHERE id = ?', [department_id]);
+    if (!departments.length) return res.status(404).json({ success: false, message: 'Department not found' });
+
+    // Check for duplicate (one SLA per department only)
     const [dups] = await pool.execute(
       `SELECT id FROM sla_configurations
-       WHERE tenant_id = ?
-         AND ((product_id = ?) OR (product_id IS NULL AND ? IS NULL))
-         AND ((module_id = ?) OR (module_id IS NULL AND ? IS NULL))
-         AND ((issue_type_id = ?) OR (issue_type_id IS NULL AND ? IS NULL))
+       WHERE department_id = ?
        LIMIT 1`,
-      [tenantId, productId, productId, moduleId, moduleId, issueTypeId, issueTypeId]
+      [department_id]
     );
     if (dups.length > 0) {
-      return res.status(400).json({ success: false, message: 'Duplicate SLA rule for the same scope already exists' });
+      return res.status(400).json({ success: false, message: 'An SLA configuration already exists for this department. Please edit the existing one.' });
     }
 
     const [result] = await pool.execute(
       `INSERT INTO sla_configurations
-       (tenant_id, product_id, module_id, issue_type_id, issue_name, issue_description, response_time_minutes, resolution_time_minutes, is_active, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [tenantId, productId, moduleId, issueTypeId, issue_name || issue_type_id || 'Generic', issue_description || null, response_time_minutes, resolution_time_minutes, is_active, createdBy]
+       (department_id, subcategory_id, priority_level, response_time_minutes, resolution_time_minutes, escalation_warning_threshold_minutes, escalation_breach_threshold_minutes, escalation_level, is_active, created_by)
+       VALUES (?, ?, 'P2', ?, ?, ?, ?, ?, ?, ?)`,
+      [department_id, subcategory_id || null, response_time_minutes, resolution_time_minutes, escalation_warning_threshold_minutes || null, escalation_breach_threshold_minutes || null, escalation_level || 'department_head', is_active, createdBy]
     );
     res.status(201).json({
       success: true,
@@ -1225,30 +1202,43 @@ router.post('/configurations', authenticateToken, verifyTenantAccess, async (req
 // Update SLA configuration
 router.put('/configurations/:id', authenticateToken, verifyTenantAccess, async (req, res) => {
   try {
-    const tenantId = req.tenantId;
+    const tenantId = req.tenantId || 1;
     const { id } = req.params;
-    const { product_id, module_id, issue_type_id, issue_name, issue_description, response_time_minutes, resolution_time_minutes, is_active } = req.body;
-    const productId = product_id === '' || product_id === undefined ? null : Number(product_id);
-    const moduleId = module_id === '' || module_id === undefined ? null : Number(module_id);
-    const issueTypeId = normalizeIssueTypeId(issue_type_id || issue_name);
+    const { department_id, subcategory_id, priority_level, response_time_minutes, resolution_time_minutes, escalation_warning_threshold_minutes, escalation_breach_threshold_minutes, escalation_level, is_active } = req.body;
+
+    if (!department_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Department is required'
+      });
+    }
+    if (!response_time_minutes || !resolution_time_minutes) {
+      return res.status(400).json({
+        success: false,
+        message: 'Response Time and Resolution Time are required'
+      });
+    }
+
+    // Check if department exists
+    const [departments] = await pool.execute('SELECT id, name FROM departments WHERE id = ?', [department_id]);
+    if (!departments.length) return res.status(404).json({ success: false, message: 'Department not found' });
+
+    // Check for duplicate department (excluding current record)
     const [dups] = await pool.execute(
       `SELECT id FROM sla_configurations
-       WHERE tenant_id = ? AND id != ?
-         AND ((product_id = ?) OR (product_id IS NULL AND ? IS NULL))
-         AND ((module_id = ?) OR (module_id IS NULL AND ? IS NULL))
-         AND ((issue_type_id = ?) OR (issue_type_id IS NULL AND ? IS NULL))
+       WHERE id != ? AND department_id = ?
        LIMIT 1`,
-      [tenantId, id, productId, productId, moduleId, moduleId, issueTypeId, issueTypeId]
+      [id, department_id]
     );
     if (dups.length > 0) {
-      return res.status(400).json({ success: false, message: 'Duplicate SLA rule for the same scope already exists' });
+      return res.status(400).json({ success: false, message: 'An SLA configuration already exists for this department' });
     }
 
     const [result] = await pool.execute(`
-      UPDATE sla_configurations 
-      SET product_id = ?, module_id = ?, issue_type_id = ?, issue_name = ?, issue_description = ?, response_time_minutes = ?, resolution_time_minutes = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP 
-      WHERE id = ? AND tenant_id = ?
-    `, [productId, moduleId, issueTypeId, issue_name || issue_type_id || 'Generic', issue_description || null, response_time_minutes, resolution_time_minutes, is_active, id, tenantId]);
+      UPDATE sla_configurations
+      SET department_id = ?, subcategory_id = ?, priority_level = 'P2', response_time_minutes = ?, resolution_time_minutes = ?, escalation_warning_threshold_minutes = ?, escalation_breach_threshold_minutes = ?, escalation_level = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [department_id, subcategory_id || null, response_time_minutes, resolution_time_minutes, escalation_warning_threshold_minutes || null, escalation_breach_threshold_minutes || null, escalation_level || 'department_head', is_active, id]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({

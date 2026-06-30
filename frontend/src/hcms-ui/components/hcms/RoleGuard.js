@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getRequiredRoles, ROLE_DASHBOARD_ROUTE } from '../../modules/auth/constants';
 
@@ -17,6 +17,7 @@ import { getRequiredRoles, ROLE_DASHBOARD_ROUTE } from '../../modules/auth/const
  */
 function RoleGuard({ children }) {
   const { user, isLoading, isAuthenticated } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -27,10 +28,10 @@ function RoleGuard({ children }) {
   }
 
   if (!isAuthenticated || !user) {
-    return <Navigate to="/hcms/login" replace />;
+    return <Navigate to="/hcms/login" replace state={{ from: location }} />;
   }
 
-  const path = window.location.pathname;
+  const path = location.pathname;
   const requiredRoles = getRequiredRoles(path);
 
   // If route has no role restriction, allow through.
@@ -43,8 +44,10 @@ function RoleGuard({ children }) {
 
   if (!isAllowed) {
     // Redirect to the user's own dashboard instead of showing an error page.
-    const fallback = ROLE_DASHBOARD_ROUTE[userRole] || '/hcms/login';
-    return <Navigate to={fallback} replace />;
+    const fallback = ROLE_DASHBOARD_ROUTE[userRole] || '/hcms/dashboard';
+    if (fallback !== path) {
+      return <Navigate to={fallback} replace />;
+    }
   }
 
   return children;
